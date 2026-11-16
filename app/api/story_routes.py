@@ -8,7 +8,7 @@ from datetime import datetime
 from flask import Blueprint, request
 from flask_login import login_required, current_user
 
-from ..models import db, Story
+from ..models import db, Story, User, Follow
 from app.safety import hidden_user_ids, is_blocked_between, find_objectionable, OBJECTIONABLE_ERROR
 
 story_routes = Blueprint('stories', __name__)
@@ -34,6 +34,27 @@ def user_stories(user_id):
                .order_by(Story.created_at.asc())
                .all())
     return {'stories': [s.to_dict() for s in stories]}
+
+
+@story_routes.route('/rail', methods=['GET'])
+def story_rail():
+    """People to show in the Home story row: whoever has an active story,
+    the people you follow first. Public, so signed-out visitors see it too."""
+    _purge_expired()
+    now = datetime.utcnow()
+    hidden = hidden_user_ids()
+    owner_ids = {s.user_id for s in Story.query.filter(Story.expires_at > now).all()}
+    owner_ids -= hidden
+    following = set()
+    if current_user.is_authenticated:
+        following = {f.followed_id for f in Follow.query.filter_by(follower_id=current_user.id).all()}
+        owner_ids.discard(current_user.id)
+    users = User.query.filter(User.id.in_(owner_ids)).all() if owner_ids else []
+    users.sort(key=lambda u: (u.id not in following, -u.follower_count()))
+    me = None
+    if current_user.is_authenticated:
+        me = {**current_user.to_dict_basic(), 'has_story': current_user.has_active_story()}
+    return {'me': me, 'users': [{**u.to_dict_basic(), 'has_story': True} for u in users[:20]]}
 
 
 @story_routes.route('', methods=['POST'])

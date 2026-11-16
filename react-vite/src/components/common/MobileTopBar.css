@@ -2,34 +2,91 @@
 
 @media (max-width: 768px) {
   .mtopbar {
-    display: flex;
+    display: grid;
+    grid-template-columns: 52px 1fr 52px;
     align-items: center;
-    justify-content: space-between;
     position: sticky;
     top: 0;
     z-index: 60;
-    min-height: 50px;
-    padding: env(safe-area-inset-top, 0px) 14px 0;
-    background: rgba(10, 7, 16, 0.82);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border-bottom: 1px solid var(--line);
+    padding: calc(env(safe-area-inset-top, 0px) + 10px) 16px 10px;
+    background: linear-gradient(180deg, rgba(42, 20, 80, 0.92) 0%, rgba(20, 11, 34, 0.75) 100%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
   }
 }
 
-.mtopbar-brand { font-size: 22px; line-height: 50px; }
-.mtopbar-actions { display: flex; align-items: center; gap: 8px; }
-.mtopbar-btn {
-  width: 38px;
-  height: 38px;
-  display: flex;
+.mtopbar-title {
+  margin: 0;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  color: #fff;
+}
+
+/* round glass header button */
+.round-btn {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
-  color: var(--text);
-  font-size: 18px;
-  background: var(--bg-card);
-  border: 1px solid var(--line);
-  transition: color 0.15s ease, border-color 0.15s ease;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #fff;
+  font-size: 21px;
+  cursor: pointer;
+  transition: background 0.15s ease;
 }
-.mtopbar-btn.active { color: var(--neon); border-color: var(--neon); }
+.round-btn:hover { background: rgba(255, 255, 255, 0.18); }
+.round-btn-dot {
+  position: absolute;
+  top: 11px;
+  right: 12px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #e11d48;
+  border: 2px solid #2a1450;
+}
+
+.mtopbar-overlay { position: fixed; inset: 0; z-index: 70; }
+.mtopbar-menu {
+  position: absolute;
+  top: calc(100% - 4px);
+  left: 16px;
+  z-index: 71;
+  min-width: 210px;
+  padding: 6px;
+  border-radius: 18px;
+  background: rgba(36, 22, 56, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5);
+}
+.mtopbar-menu a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+}
+.mtopbar-menu a:hover { background: rgba(255, 255, 255, 0.08); }
+
+:root[data-theme="light"] .mtopbar {
+  background: linear-gradient(180deg, rgba(246, 240, 255, 0.95) 0%, rgba(246, 242, 252, 0.85) 100%);
+}
+:root[data-theme="light"] .mtopbar-title { color: var(--text); }
+:root[data-theme="light"] .round-btn {
+  background: #fff;
+  border-color: var(--line);
+  color: var(--text);
+}
+:root[data-theme="light"] .mtopbar-menu { background: #fff; border-color: var(--line); }
+:root[data-theme="light"] .mtopbar-menu a { color: var(--text); }

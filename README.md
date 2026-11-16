@@ -1,8 +1,10 @@
-# Aura
+# Aura V2
+
+**Aura V2** is a redesign of Aura with a card-based feed, story row, floating navigation and glass-style screens. The original Aura lives in its own repo.
 
 **Share your aura with the world.** Aura is a short-video social app: record, post, go live, and connect with the people who match your energy.
 
-**Live app:** https://aura-x2a4.onrender.com
+**Live app:** not deployed yet
 
 ## Features
 

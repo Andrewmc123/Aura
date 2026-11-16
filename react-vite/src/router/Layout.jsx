@@ -14,8 +14,7 @@ const CHROMELESS = ["/login", "/signup", "/home"];
 const SPLASH_MIN_MS = 1700;   // keep the launch screen up at least this long
 
 // full-screen, immersive screens that get no mobile app bar
-const isImmersive = (path) =>
-  path === "/" || path === "/following" || path.startsWith("/video/");
+const isImmersive = (path) => path === "/watch" || path.startsWith("/video/");
 
 export default function Layout() {
   const dispatch = useDispatch();
