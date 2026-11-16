@@ -8,9 +8,9 @@ from sqlalchemy import pool
 
 from alembic import context
 
-import os
-environment = os.getenv("FLASK_ENV")
-SCHEMA = os.environ.get("SCHEMA")
+# Shared with the models so both agree on whether the Postgres schema applies
+# (it is skipped when the database is SQLite).
+from app.models.db import environment, SCHEMA
 
 
 # this is the Alembic Config object, which provides

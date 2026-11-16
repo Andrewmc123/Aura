@@ -6,6 +6,7 @@ import {
   FaFire, FaLink, FaCrown, FaWandMagicSparkles, FaFeather, FaGlobe, FaStar,
   FaGuitar, FaHandFist, FaRocket, FaClock, FaUserPlus, FaTrophy,
 } from "react-icons/fa6";
+import { useAppConfig } from "../../utils/safety";
 import "./Live.css";
 
 const POLL_MS = 1500;
@@ -39,6 +40,7 @@ function fmtCountdown(ms) {
 
 export default function LiveRoom() {
   const { id } = useParams();
+  const { purchases_enabled: purchasesEnabled } = useAppConfig();
   const sid = Number(id);
   const navigate = useNavigate();
 
@@ -220,11 +222,12 @@ export default function LiveRoom() {
       fetchState();
     } else {
       const d = await res.json().catch(() => ({}));
-      setGiftErr(res.status === 402 ? "Not enough Bolts — top up below." : (d.error || "Couldn't send that gift."));
+      setGiftErr(res.status === 402 ? (purchasesEnabled ? "Not enough Bolts — top up below." : "Not enough Bolts for that gift.") : (d.error || "Couldn't send that gift."));
     }
   };
 
   const topUp = async (pack = "pro") => {
+    if (!purchasesEnabled) return;
     const res = await fetch("/api/wallet/bolts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -405,7 +408,9 @@ export default function LiveRoom() {
             <div className="gift-sheet-inner" onClick={(e) => e.stopPropagation()}>
               <div className="gift-sheet-head">
                 <span className="gift-bal"><FaBolt /> {(wallet?.bolts ?? 0).toLocaleString()} Bolts</span>
-                <button className="gift-topup" onClick={() => topUp("pro")}><FaPlus /> Get Bolts</button>
+                {purchasesEnabled && (
+                  <button className="gift-topup" onClick={() => topUp("pro")}><FaPlus /> Get Bolts</button>
+                )}
                 <button className="gift-close" onClick={() => setGiftOpen(false)} aria-label="Close"><FaXmark /></button>
               </div>
               {freeReady && <p className="gift-free-hint"><FaGift /> Your daily free gift is ready — send it on the house</p>}

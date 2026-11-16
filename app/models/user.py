@@ -58,6 +58,9 @@ class User(db.Model, UserMixin):
     show_activity = db.Column(db.Boolean, default=True, nullable=False)
     notif_prefs = db.Column(db.JSON)
 
+    # When this person agreed to the Terms / Community Guidelines at signup.
+    terms_accepted_at = db.Column(db.DateTime)
+
     # Presence — `presence_status` is the user's own choice from Settings
     # ('active' | 'dnd' | 'offline'); `last_seen` is stamped automatically on
     # every authenticated request. Green only shows when both agree the user
@@ -288,6 +291,21 @@ class User(db.Model, UserMixin):
             'birthdate': self.birthdate or '',
             'address': self.address or '',
         }
+
+    # Fields only the account owner should ever receive.
+    PRIVATE_FIELDS = (
+        'email', 'address', 'birthdate', 'bolts', 'glow', 'notif_prefs',
+        'allow_comments', 'allow_messages', 'show_activity', 'presence_status',
+        'free_gift_ready', 'free_gift_resets_at',
+        'vault_people_count', 'vault_photos_count',
+    )
+
+    def to_public_dict(self):
+        """Profile data that is safe to show to other people."""
+        data = self.to_dict()
+        for key in self.PRIVATE_FIELDS:
+            data.pop(key, None)
+        return data
 
     def to_dict_basic(self):
         return {

@@ -64,7 +64,9 @@ export const sendMessage = (userId, { content, postId } = {}) => async (dispatch
     dispatch(addMessage(userId, message));
     return message;
   }
-  return null;
+  // surface the server's reason (blocked, filtered wording ...) to the composer
+  const failure = await res.json().catch(() => ({}));
+  return { error: failure.error || "Couldn't send that message." };
 };
 
 export const clearAllConversations = () => async (dispatch) => {

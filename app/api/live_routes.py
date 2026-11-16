@@ -7,7 +7,8 @@ from flask_login import login_required, current_user
 from datetime import datetime, timedelta
 from sqlalchemy import or_
 
-from app.models import db, User, LiveSession, LiveViewer, LiveMessage, LiveReport
+from app.models import db, User, LiveSession, LiveViewer, LiveMessage, LiveReport, Report
+from app.safety import hidden_user_ids, is_blocked_between, find_objectionable, OBJECTIONABLE_ERROR
 from app.gifts import (
     gift_by_key, GIFTS_UNLOCK_AURA, FREE_GIFT_KEY, FREE_GIFT_COOLDOWN_HOURS,
     LIVE_24H_HOURS, LIVE_24H_REWARDS,
@@ -74,7 +75,8 @@ def active_lives():
     """All currently-live sessions for the discovery grid (public)."""
     sessions = LiveSession.query.filter_by(is_live=True)\
         .order_by(LiveSession.created_at.desc()).all()
-    return jsonify({'sessions': [s.to_dict() for s in sessions]})
+    hidden = hidden_user_ids()
+    return jsonify({'sessions': [s.to_dict() for s in sessions if s.host_id not in hidden]})
 
 
 @live_routes.route('/start', methods=['POST'])
@@ -197,6 +199,8 @@ def post_chat(session_id):
     content = ((request.get_json() or {}).get('content') or '').strip()[:500]
     if not content:
         return jsonify({'error': 'Empty message'}), 400
+    if find_objectionable(content):
+        return jsonify({'error': OBJECTIONABLE_ERROR}), 400
     msg = LiveMessage(session_id=session_id, user_id=current_user.id, content=content)
     db.session.add(msg)
     db.session.commit()
@@ -309,5 +313,14 @@ def report_user(session_id):
         reported_user_id=data.get('user_id'),
         reason=(data.get('reason') or '').strip()[:255] or None,
     ))
+    if data.get('user_id'):
+        db.session.add(Report(
+            reporter_id=current_user.id,
+            target_type='user',
+            target_id=data.get('user_id'),
+            reported_user_id=data.get('user_id'),
+            reason='other',
+            details=('Reported during a live. ' + (data.get('reason') or '')).strip()[:500],
+        ))
     db.session.commit()
     return jsonify({'ok': True})

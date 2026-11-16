@@ -5,6 +5,7 @@ from sqlalchemy import or_, and_
 from sqlalchemy.orm import joinedload, selectinload
 from datetime import datetime
 import json
+from app.safety import hidden_user_ids, is_blocked_between, find_objectionable, OBJECTIONABLE_ERROR
 
 post_routes = Blueprint('posts', __name__)
 
@@ -65,6 +66,9 @@ def get_feed():
     per_page = min(20, request.args.get('per_page', 8, type=int))
 
     query = Post.query.options(*POST_QUERY_OPTIONS)
+    hidden = hidden_user_ids()
+    if hidden:
+        query = query.filter(~Post.user_id.in_(hidden))
 
     if tab == 'following':
         if not current_user.is_authenticated:
@@ -96,6 +100,8 @@ def get_feed():
 @login_required
 def get_all_posts():
     posts = Post.query.options(*POST_QUERY_OPTIONS).order_by(Post.created_at.desc()).all()
+    hidden = hidden_user_ids()
+    posts = [p for p in posts if p.user_id not in hidden]
     uid = viewer_id()
     return {'posts': [p.to_dict(uid) for p in posts]}
 
@@ -104,12 +110,16 @@ def get_all_posts():
 def get_single_post(post_id):
     """Public single video page (share target)."""
     post = Post.query.options(*POST_QUERY_OPTIONS).get_or_404(post_id)
+    if post.user_id in hidden_user_ids():
+        return {'error': 'This video is unavailable'}, 404
     return post.to_dict(viewer_id())
 
 
 @post_routes.route('/user/<int:user_id>')
 def get_user_posts(user_id):
     user = User.query.get_or_404(user_id)
+    if user.id in hidden_user_ids():
+        return {'posts': []}
     posts = Post.query.options(*POST_QUERY_OPTIONS)\
         .filter_by(user_id=user.id).order_by(Post.created_at.desc()).all()
     uid = viewer_id()
@@ -123,7 +133,8 @@ def get_liked_posts(user_id):
     post_ids = [l.post_id for l in likes]
     posts = Post.query.options(*POST_QUERY_OPTIONS).filter(Post.id.in_(post_ids)).all()
     by_id = {p.id: p for p in posts}
-    ordered = [by_id[pid] for pid in post_ids if pid in by_id]
+    hidden = hidden_user_ids()
+    ordered = [by_id[pid] for pid in post_ids if pid in by_id and by_id[pid].user_id not in hidden]
     uid = viewer_id()
     return {'posts': [p.to_dict(uid) for p in ordered]}
 
@@ -157,6 +168,8 @@ def create_post():
 
     if not body and not image_url and not video_url:
         return {'error': 'A caption, video, image or GIF is required'}, 400
+    if find_objectionable(body, data.get('sound_name'), data.get('location')):
+        return {'error': OBJECTIONABLE_ERROR}, 400
 
     edit_data = data.get('edit_data')
     if isinstance(edit_data, (dict, list)):
@@ -194,6 +207,8 @@ def update_post(post_id):
 
     data = request.get_json() or {}
     body = data.get('body')
+    if find_objectionable(body, data.get('sound_name')):
+        return {'error': OBJECTIONABLE_ERROR}, 400
     if body is not None:
         post.body = body.strip()
     if 'image_url' in data:
@@ -274,7 +289,17 @@ def get_comments(post_id):
         .order_by(Comment.created_at.desc())\
         .all()
     uid = viewer_id()
-    return {'comments': [c.to_dict(uid, include_replies=True) for c in comments]}, 200
+    hidden = hidden_user_ids()
+    out = []
+    for c in comments:
+        if c.user_id in hidden:
+            continue
+        d = c.to_dict(uid, include_replies=True)
+        if hidden:
+            d['replies'] = [r for r in d.get('replies', []) if r['user_id'] not in hidden]
+            d['reply_count'] = len(d['replies'])
+        out.append(d)
+    return {'comments': out}, 200
 
 
 @post_routes.route('/<int:post_id>/comments', methods=['POST'])
@@ -288,7 +313,12 @@ def add_comment(post_id):
     if not body and not gif_url:
         return {'error': 'Comment text or a GIF is required'}, 400
 
+    if find_objectionable(body):
+        return {'error': OBJECTIONABLE_ERROR}, 400
+
     post = Post.query.get_or_404(post_id)
+    if post.user_id != current_user.id and is_blocked_between(current_user.id, post.user_id):
+        return {'error': "You can't comment on this video"}, 403
 
     # a reply must point at a real top-level comment on this same post
     parent = None
@@ -345,6 +375,7 @@ def get_friends_posts():
     friend_ids = get_friend_ids(current_user.id)
     friend_ids.add(current_user.id)
 
+    friend_ids -= hidden_user_ids()
     all_posts = Post.query.options(*POST_QUERY_OPTIONS).filter(
         Post.user_id.in_(friend_ids)
     ).order_by(Post.created_at.desc()).all()

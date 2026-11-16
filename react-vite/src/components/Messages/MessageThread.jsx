@@ -3,6 +3,9 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { FaArrowLeft, FaPaperPlane } from "react-icons/fa6";
 import { fetchThread, sendMessage } from "../../redux/messages";
+import { useModal } from "../../context/Modal";
+import UserSafetyMenu from "../Safety/UserSafetyMenu";
+import ReportModal from "../Safety/ReportModal";
 import "./Messages.css";
 
 export default function MessageThread() {
@@ -14,6 +17,8 @@ export default function MessageThread() {
   const thread = useSelector((s) => s.messages.threads[uid]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState("");
+  const { setModalContent } = useModal();
   const endRef = useRef(null);
 
   useEffect(() => {
@@ -29,9 +34,14 @@ export default function MessageThread() {
     const content = text.trim();
     if (!content || sending) return;
     setSending(true);
+    setSendError("");
     setText("");
-    await dispatch(sendMessage(uid, { content }));
+    const sent = await dispatch(sendMessage(uid, { content }));
     setSending(false);
+    if (sent && sent.error) {
+      setSendError(sent.error);
+      setText(content);
+    }
   };
 
   const other = thread?.user;
@@ -55,6 +65,15 @@ export default function MessageThread() {
             <span>@{other.username}</span>
           </Link>
         )}
+        {other && (
+          <span style={{ marginLeft: "auto" }}>
+            <UserSafetyMenu
+              user={other}
+              className="thread-back"
+              onChange={(blocked) => blocked && navigate("/messages")}
+            />
+          </span>
+        )}
       </header>
 
       <div className="thread-body">
@@ -76,12 +95,28 @@ export default function MessageThread() {
                   </Link>
                 )}
               </div>
+              {!mine && (
+                <button
+                  className="bubble-report"
+                  onClick={() => setModalContent(
+                    <ReportModal
+                      targetType="message"
+                      targetId={m.id}
+                      owner={other}
+                      onBlocked={() => navigate("/messages")}
+                    />
+                  )}
+                >
+                  Report
+                </button>
+              )}
             </div>
           );
         })}
         <div ref={endRef} />
       </div>
 
+      {sendError && <p className="auth-error" style={{ padding: "0 14px" }}>{sendError}</p>}
       <form className="thread-composer" onSubmit={submit}>
         <input
           value={text}

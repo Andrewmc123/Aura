@@ -20,6 +20,8 @@ import Network from "../components/Network";
 import Camera from "../components/Camera/Camera";
 import Vault from "../components/Vault/Vault";
 import Shop from "../components/Shop";
+import { PrivacyPage, TermsPage, SupportPage } from "../components/Legal/LegalPages";
+import AdminReports from "../components/Safety/AdminReports";
 
 const createAppRouter = () => {
   const AuthRedirect = ({ children }) => {
@@ -52,6 +54,10 @@ const createAppRouter = () => {
         { path: "/live/:id", element: <AuthCheck><LiveRoom /></AuthCheck> },
         { path: "/users/:userId", element: <UserProfilePage /> },
         { path: "/settings", element: <SettingsPage /> },
+        { path: "/privacy", element: <PrivacyPage /> },
+        { path: "/terms", element: <TermsPage /> },
+        { path: "/support", element: <SupportPage /> },
+        { path: "/admin/reports", element: <AuthCheck><AdminReports /></AuthCheck> },
         { path: "/home", element: <Home /> },
         { path: "/login", element: <AuthRedirect><LoginFormPage /></AuthRedirect> },
         { path: "/signup", element: <AuthRedirect><SignupFormPage /></AuthRedirect> },

@@ -19,6 +19,7 @@ import StoryComposer from "../Stories/StoryComposer";
 import StoryViewer from "../Stories/StoryViewer";
 import { thunkFetchUserStories } from "../../redux/stories";
 import { compact } from "../../utils/format";
+import UserSafetyMenu from "../Safety/UserSafetyMenu";
 import "./UserProfilePage.css";
 
 export default function UserProfilePage() {
@@ -107,6 +108,15 @@ export default function UserProfilePage() {
       .then((d) => setProfile(d))
       .catch(() => {});
 
+  const blockedByMe = !!profile.blocked_by_me;
+  const blockedMe = !!profile.blocked_me;
+  const hidden = blockedByMe || blockedMe;
+
+  const onBlockChange = () => {
+    refreshProfile();
+    dispatch(fetchUserVideos(userId));
+  };
+
   const openStoryComposer = () => setModalContent(<StoryComposer onPosted={refreshProfile} />);
 
   const openStoryViewer = async () => {
@@ -174,13 +184,18 @@ export default function UserProfilePage() {
             </Link>
           ) : (
             <>
-              <button className={`btn ${isFollowing ? "btn-ghost" : "btn-primary"}`} onClick={onFollow}>
-                {isFollowing ? <><FaUserCheck /> Following</> : <><FaUserPlus /> Follow</>}
-              </button>
-              {sessionUser && (
+              {!hidden && (
+                <button className={`btn ${isFollowing ? "btn-ghost" : "btn-primary"}`} onClick={onFollow}>
+                  {isFollowing ? <><FaUserCheck /> Following</> : <><FaUserPlus /> Follow</>}
+                </button>
+              )}
+              {sessionUser && !hidden && (
                 <Link className="btn btn-ghost" to={`/messages/${userId}`}>
                   <FaPaperPlane /> Message
                 </Link>
+              )}
+              {sessionUser && (
+                <UserSafetyMenu user={profile} blocked={blockedByMe} onChange={onBlockChange} />
               )}
             </>
           )}
@@ -189,7 +204,13 @@ export default function UserProfilePage() {
           </button>
         </div>
 
-        {profile.bio && <p className="profile-bio">{profile.bio}</p>}
+        {profile.bio && !hidden && <p className="profile-bio">{profile.bio}</p>}
+        {blockedByMe && (
+          <p className="blocked-banner">You blocked @{profile.username}. Unblock them from the ⋯ menu to see their posts.</p>
+        )}
+        {blockedMe && !blockedByMe && (
+          <p className="blocked-banner">This account isn&apos;t available.</p>
+        )}
 
         {isOwn && visitors.length > 0 && (
           <div className="profile-visitors">
@@ -244,7 +265,7 @@ export default function UserProfilePage() {
           emptyText={isOwn ? "You haven't posted yet — your first video awaits 🎬" : "No videos yet"}
         />
       )}
-      {tab === "liked" && <VideoGrid posts={liked} emptyText="No liked videos yet" />}
+      {tab === "liked" && <VideoGrid posts={hidden ? [] : liked} emptyText="No liked videos yet" />}
       {tab === "favorites" && isOwn && (
         <VideoGrid posts={favorites} emptyText="Save videos to find them here later 🔖" />
       )}

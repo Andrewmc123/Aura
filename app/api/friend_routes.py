@@ -153,7 +153,7 @@ def get_pending_friends():
         for request in pending_requests:
             user = User.query.get(request.user_id)
             if user:
-                pending_users.append(user.to_dict())
+                pending_users.append(user.to_public_dict())
 
         return jsonify({"pending": pending_users}), 200
 
@@ -185,7 +185,7 @@ def get_friends():
                 user = User.query.get(friend.user_id)
             
             if user:
-                friend_users.append(user.to_dict())
+                friend_users.append(user.to_public_dict())
 
         return jsonify({"friends": friend_users}), 200
 

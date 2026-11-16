@@ -1,6 +1,15 @@
 """
 File upload API — stores videos, images, GIFs and audio recorded or chosen
-in the Upload Studio under app/uploads/ and serves them at /uploads/<name>.
+in the Upload Studio.
+
+Two storage modes:
+  * Cloud bucket (production): when the S3_* env vars are set, files go to an
+    S3-compatible bucket (Cloudflare R2, AWS S3, Backblaze B2 ...) and the
+    returned URL points at the bucket's public address. Files survive
+    redeploys and restarts.
+  * Local disk (development): files are saved under app/uploads/ and served
+    at /uploads/<name>. On a host like Render this folder is wiped on every
+    deploy, so it is only suitable for local work.
 """
 import os
 import uuid
@@ -30,7 +39,40 @@ MIME_FALLBACK_EXT = {
     'audio/mpeg': 'mp3',
     'audio/webm': 'weba',
     'audio/wav': 'wav',
+    'audio/mp4': 'm4a',
 }
+
+CONTENT_TYPES = {
+    'mp4': 'video/mp4', 'webm': 'video/webm', 'mov': 'video/quicktime',
+    'm4v': 'video/x-m4v', 'ogv': 'video/ogg',
+    'png': 'image/png', 'jpg': 'image/jpeg', 'jpeg': 'image/jpeg',
+    'gif': 'image/gif', 'webp': 'image/webp',
+    'mp3': 'audio/mpeg', 'wav': 'audio/wav', 'ogg': 'audio/ogg',
+    'm4a': 'audio/mp4', 'weba': 'audio/webm',
+}
+
+_s3_client = None
+
+
+def cloud_storage_configured():
+    return all(os.environ.get(k) for k in (
+        'S3_BUCKET', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY', 'S3_PUBLIC_URL'))
+
+
+def _s3():
+    global _s3_client
+    if _s3_client is None:
+        import boto3
+        from botocore.config import Config as BotoConfig
+        _s3_client = boto3.client(
+            's3',
+            endpoint_url=os.environ.get('S3_ENDPOINT_URL') or None,
+            region_name=os.environ.get('S3_REGION') or 'auto',
+            aws_access_key_id=os.environ['S3_ACCESS_KEY_ID'],
+            aws_secret_access_key=os.environ['S3_SECRET_ACCESS_KEY'],
+            config=BotoConfig(signature_version='s3v4', retries={'max_attempts': 3}),
+        )
+    return _s3_client
 
 
 def upload_dir():
@@ -58,14 +100,32 @@ def upload_file():
     if '.' in file.filename:
         ext = file.filename.rsplit('.', 1)[1].lower()
     if ext not in ALLOWED_EXTENSIONS:
-        ext = MIME_FALLBACK_EXT.get(file.mimetype, '')
+        ext = MIME_FALLBACK_EXT.get((file.mimetype or '').split(';')[0], '')
     if ext not in ALLOWED_EXTENSIONS:
         return {'error': f'File type not supported. Allowed: {", ".join(sorted(ALLOWED_EXTENSIONS))}'}, 400
 
     name = f'{uuid.uuid4().hex}.{ext}'
-    file.save(os.path.join(upload_dir(), name))
+
+    if cloud_storage_configured():
+        try:
+            _s3().upload_fileobj(
+                file.stream,
+                os.environ['S3_BUCKET'],
+                name,
+                ExtraArgs={
+                    'ContentType': CONTENT_TYPES.get(ext, 'application/octet-stream'),
+                    'CacheControl': 'public, max-age=31536000, immutable',
+                },
+            )
+        except Exception:
+            current_app.logger.exception('Cloud upload failed')
+            return {'error': 'Upload failed. Please try again.'}, 502
+        url = f"{os.environ['S3_PUBLIC_URL'].rstrip('/')}/{name}"
+    else:
+        file.save(os.path.join(upload_dir(), name))
+        url = f'/uploads/{name}'
 
     kind = 'video' if ext in {'mp4', 'webm', 'mov', 'm4v', 'ogv'} else (
         'audio' if ext in {'mp3', 'wav', 'ogg', 'm4a', 'weba'} else 'image')
 
-    return {'url': f'/uploads/{name}', 'media_kind': kind}, 201
+    return {'url': url, 'media_kind': kind}, 201

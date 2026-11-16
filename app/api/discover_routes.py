@@ -7,6 +7,7 @@ from collections import Counter, defaultdict
 
 from flask import Blueprint, request
 from flask_login import current_user
+from app.safety import hidden_user_ids, is_blocked_between, find_objectionable, OBJECTIONABLE_ERROR
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import joinedload, selectinload
 
@@ -126,7 +127,10 @@ def trending():
         for name, count in sound_counts.most_common(8)
     ]
 
-    creators = sorted(User.query.all(), key=lambda u: len(u.followers), reverse=True)[:8]
+    hidden = hidden_user_ids()
+    creators = sorted(
+        [u for u in User.query.all() if u.id not in hidden],
+        key=lambda u: len(u.followers), reverse=True)[:8]
 
     return {
         'hashtags': hashtags,
@@ -139,7 +143,8 @@ def trending():
 def explore_videos():
     """Explore grid — optionally filtered by category — public."""
     category = (request.args.get('category') or 'all').lower()
-    posts = Post.query.options(*POST_OPTS()).all()
+    hidden = hidden_user_ids()
+    posts = [p for p in Post.query.options(*POST_OPTS()).all() if p.user_id not in hidden]
 
     if category != 'all' and category in CATEGORY_KEYWORDS:
         keywords = CATEGORY_KEYWORDS[category]
@@ -162,7 +167,9 @@ def hashtag_videos(tag):
     """All videos for a hashtag — public."""
     tag = tag.lstrip('#').lower()
     posts = Post.query.options(*POST_OPTS()).all()
-    matched = [p for p in posts if tag in [t.lower() for t in p.hashtags]]
+    hidden = hidden_user_ids()
+    matched = [p for p in posts
+               if p.user_id not in hidden and tag in [t.lower() for t in p.hashtags]]
     matched.sort(key=lambda p: (p.views or 0), reverse=True)
     uid = viewer_id()
     return {
@@ -205,7 +212,8 @@ def search():
         )
         for w in words
     ]
-    users = User.query.filter(and_(*user_clauses)).all()
+    hidden = hidden_user_ids()
+    users = [u for u in User.query.filter(and_(*user_clauses)).all() if u.id not in hidden]
     users.sort(key=lambda u: (_user_rank(u, q, words), -u.follower_count()))
 
     # ---- videos ---------------------------------------------------------
@@ -227,6 +235,7 @@ def search():
         .filter(and_(*post_clauses))
         .all()
     )
+    posts = [p for p in posts if p.user_id not in hidden]
     posts.sort(key=lambda p: (_post_rank(p, words), -_engagement(p)))
 
     # ---- hashtags -------------------------------------------------------

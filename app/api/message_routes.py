@@ -7,6 +7,7 @@ from flask_login import login_required, current_user
 from sqlalchemy import or_, and_
 
 from app.models import db, Message, User, Post
+from app.safety import hidden_user_ids, is_blocked_between, find_objectionable, OBJECTIONABLE_ERROR
 
 message_routes = Blueprint('messages', __name__)
 
@@ -24,9 +25,12 @@ def get_conversations():
         or_(Message.sender_id == me, Message.recipient_id == me)
     ).order_by(Message.created_at.desc()).all()
 
+    hidden = hidden_user_ids(me)
     convos = {}
     for m in msgs:
         other = m.recipient_id if m.sender_id == me else m.sender_id
+        if other in hidden:
+            continue
         if other not in convos:
             partner = m.recipient if m.sender_id == me else m.sender
             convos[other] = {
@@ -47,10 +51,14 @@ def get_conversations():
 @login_required
 def unread_count():
     """Total unread DMs for the nav badge."""
-    count = Message.query.filter(
+    q = Message.query.filter(
         Message.recipient_id == current_user.id,
         Message.is_read.is_(False),
-    ).count()
+    )
+    hidden = hidden_user_ids()
+    if hidden:
+        q = q.filter(~Message.sender_id.in_(hidden))
+    count = q.count()
     return jsonify({'unread_total': count})
 
 
@@ -103,6 +111,10 @@ def send_message(user_id):
 
     if not content and not post_id:
         return jsonify({'error': 'Message cannot be empty'}), 400
+    if is_blocked_between(me, user_id):
+        return jsonify({'error': "You can't message this account"}), 403
+    if find_objectionable(content):
+        return jsonify({'error': OBJECTIONABLE_ERROR}), 400
     if post_id and not Post.query.get(post_id):
         return jsonify({'error': 'Shared post not found'}), 404
 
@@ -116,9 +128,9 @@ def send_message(user_id):
         db.session.add(msg)
         db.session.commit()
         return jsonify(msg.to_dict()), 201
-    except Exception as e:
+    except Exception:
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Could not send that message. Please try again.'}), 500
 
 
 @message_routes.route('/message/<int:message_id>', methods=['DELETE'])

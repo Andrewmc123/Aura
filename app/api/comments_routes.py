@@ -2,6 +2,7 @@ from flask import Blueprint, request
 from flask_login import login_required, current_user
 from app.models import db, Comment, Post, Notification, CommentLike
 from datetime import datetime
+from app.safety import hidden_user_ids, is_blocked_between, find_objectionable, OBJECTIONABLE_ERROR
 
 comments_routes = Blueprint('comments', __name__)
 
@@ -11,7 +12,9 @@ comments_routes = Blueprint('comments', __name__)
 @login_required
 def get_all_comments():
     try:
-        comments = Comment.query.order_by(Comment.created_at.desc()).all()
+        hidden = hidden_user_ids()
+        comments = [c for c in Comment.query.order_by(Comment.created_at.desc()).all()
+                    if c.user_id not in hidden]
         return [comment.to_dict(current_user.id) for comment in comments], 200
     except Exception as e:
         return {'errors': {'message': str(e)}}, 500
@@ -29,9 +32,14 @@ def create_comment(post_id):
         if not body and not gif_url:
             return {'errors': {'message': 'Comment text or a GIF is required'}}, 400
 
+        if find_objectionable(body):
+            return {'errors': {'message': OBJECTIONABLE_ERROR}}, 400
+
         post = Post.query.get(post_id)
         if not post:
             return {'errors': {'message': 'Post not found'}}, 404
+        if post.user_id != current_user.id and is_blocked_between(current_user.id, post.user_id):
+            return {'errors': {'message': "You can't comment on this video"}}, 403
 
         comment = Comment(
             user_id=current_user.id,

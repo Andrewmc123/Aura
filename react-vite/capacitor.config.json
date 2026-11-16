@@ -1,0 +1,14 @@
+{
+  "appId": "com.REPLACE.aura",
+  "appName": "Aura",
+  "webDir": "dist",
+  "server": {
+    "url": "https://REPLACE-WITH-YOUR-LIVE-AURA-URL",
+    "cleartext": false
+  },
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#0a0710",
+    "limitsNavigationsToAppBoundDomains": false
+  }
+}

@@ -10,6 +10,8 @@ import EmojiPicker from "./EmojiPicker";
 import VerifiedAvatar from "../common/VerifiedAvatar";
 import AuraCheck from "../common/AuraCheck";
 import { compact, timeAgo } from "../../utils/format";
+import ReportModal from "../Safety/ReportModal";
+import "../Safety/Safety.css";
 import "./CommentsDrawer.css";
 
 const QUICK_EMOJI = ["😂", "🔥", "😍", "💀", "👏", "😭", "🎉", "💚"];
@@ -102,6 +104,9 @@ export default function CommentsDrawer({ post, onClose, targetCommentId }) {
       setPendingGif(null);
       setGifOpen(false);
       setReplyTo(null);
+    } else {
+      const failure = await res.json().catch(() => ({}));
+      window.alert(failure.error || "Couldn't post that comment. Please try again.");
     }
   };
 
@@ -196,6 +201,21 @@ export default function CommentsDrawer({ post, onClose, targetCommentId }) {
                 <div className="comment-meta">
                   <span>{timeAgo(cm.created_at)}</span>
                   <button className="comment-reply-btn" onClick={() => startReply(replyTarget)}>Reply</button>
+                  {user && user.id !== cm.user_id && (
+                    <button
+                      className="comment-report"
+                      onClick={() => setModalContent(
+                        <ReportModal
+                          targetType="comment"
+                          targetId={cm.id}
+                          owner={cm.user}
+                          onBlocked={() => removeComment(cm)}
+                        />
+                      )}
+                    >
+                      Report
+                    </button>
+                  )}
                   {user && (user.id === cm.user_id || user.id === post.user_id) && (
                     <button className="comment-delete" onClick={() => deleteComment(cm)} aria-label="Delete comment">
                       <FaTrash />

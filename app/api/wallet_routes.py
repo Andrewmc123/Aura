@@ -12,6 +12,8 @@ from app.gifts import (
     LIVE_24H_MIN_FOLLOWERS, LIVE_24H_MIN_AURA,
 )
 
+from app.features import demo_payments_enabled
+
 wallet_routes = Blueprint('wallet', __name__)
 
 
@@ -49,6 +51,7 @@ def gift_catalog():
         'tiers': TIERS,
         'unlock_aura': GIFTS_UNLOCK_AURA,
         'packs': BOLT_PACKS,
+        'purchases_enabled': demo_payments_enabled(),
         'free_gift_key': FREE_GIFT_KEY,
         'live_24h': {'min_followers': LIVE_24H_MIN_FOLLOWERS, 'min_aura': LIVE_24H_MIN_AURA},
     })
@@ -58,6 +61,11 @@ def gift_catalog():
 @login_required
 def buy_bolts():
     """Top up Bolts. Demo mode credits instantly (no key required)."""
+    from app.features import demo_payments_enabled
+    if not demo_payments_enabled():
+        # Selling Bolts in the iOS app must go through Apple In-App Purchase.
+        # Until that is wired up, top-ups are switched off in production.
+        return jsonify({'error': 'Bolt top-ups are coming soon.', 'coming_soon': True}), 503
     pack_key = (request.get_json() or {}).get('pack', 'starter')
     pack = BOLT_PACKS.get(pack_key) or BOLT_PACKS['starter']
     current_user.bolts = (current_user.bolts or 0) + pack['bolts']

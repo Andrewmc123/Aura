@@ -2,6 +2,8 @@ from flask import Blueprint, request
 from flask_login import login_required, current_user
 from app.models import db, User, ProfileVisit
 from datetime import datetime
+from app.safety import hidden_user_ids, is_blocked_between, find_objectionable, OBJECTIONABLE_ERROR
+from app.models import Block
 
 user_routes = Blueprint('users', __name__)
 
@@ -9,8 +11,11 @@ user_routes = Blueprint('users', __name__)
 @user_routes.route('/')
 @login_required
 def users():
-    users = User.query.all()
-    return {'users': [user.to_dict() for user in users]}
+    hidden = hidden_user_ids()
+    users = [u for u in User.query.all() if u.id not in hidden]
+    return {'users': [
+        u.to_dict() if u.id == current_user.id else u.to_public_dict() for u in users
+    ]}
 
 
 @user_routes.route('/search')
@@ -19,17 +24,28 @@ def search_user_by_username():
     username = request.args.get('username')
     user = User.query.filter_by(username=username).first()
 
-    if not user:
+    if not user or user.id in hidden_user_ids():
         return {"message": "User not found."}, 404
 
-    return {"user": user.to_dict()}, 200
+    return {"user": user.to_public_dict()}, 200
 
 
 @user_routes.route('/<int:id>')
 def user(id):
     """Public profile — like TikTok, anyone can view a creator page."""
     user = User.query.get_or_404(id)
-    return user.to_dict()
+    if not current_user.is_authenticated:
+        return user.to_public_dict()
+    if user.id == current_user.id:
+        return user.to_dict()
+    data = user.to_public_dict()
+    # Lets the profile page show "Unblock" (you blocked them) or an
+    # unavailable state (they blocked you).
+    data['blocked_by_me'] = Block.query.filter_by(
+        blocker_id=current_user.id, blocked_id=user.id).first() is not None
+    data['blocked_me'] = Block.query.filter_by(
+        blocker_id=user.id, blocked_id=current_user.id).first() is not None
+    return data
 
 
 @user_routes.route('/me', methods=['PUT'])
@@ -39,6 +55,8 @@ def update_profile():
     data = request.get_json() or {}
 
     username = (data.get('username') or '').strip()
+    if find_objectionable(username, data.get('bio'), data.get('firstname'), data.get('lastname')):
+        return {'errors': {'message': OBJECTIONABLE_ERROR}}, 400
     if username and username != current_user.username:
         taken = User.query.filter_by(username=username).first()
         if taken:
@@ -111,6 +129,8 @@ def online_users():
         users = User.query.filter(User.id.in_(following_ids)).all()
     else:
         users = User.query.filter(User.id != current_user.id).limit(30).all()
+    hidden = hidden_user_ids()
+    users = [u for u in users if u.id not in hidden]
 
     rank = {'online': 0, 'dnd': 1, 'offline': 2}
     rows = []

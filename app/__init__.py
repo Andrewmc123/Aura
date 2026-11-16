@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 from flask import Flask, send_from_directory, redirect, request
 from flask_cors import CORS
 from flask_migrate import Migrate
@@ -26,6 +27,8 @@ from .api.wallet_routes import wallet_routes
 from .api.shop_routes import shop_routes
 from .api.group_routes import group_routes
 from .api.settings_routes import settings_routes
+from .api.moderation_routes import moderation_routes
+from .features import demo_payments_enabled, support_email, minimum_age
 from .seeds import seed_commands
 from .config import Config
 
@@ -39,6 +42,22 @@ def load_user(id):
 
 app.cli.add_command(seed_commands)
 app.config.from_object(Config)
+
+IS_PRODUCTION = os.environ.get('FLASK_ENV') == 'production'
+if IS_PRODUCTION and not app.config.get('SECRET_KEY'):
+    raise RuntimeError('SECRET_KEY must be set in production.')
+
+# Session + "remember me" cookies: HTTPS-only in production, never readable by
+# page scripts, and long-lived so people stay signed in between app launches.
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+    SESSION_COOKIE_SECURE=IS_PRODUCTION,
+    REMEMBER_COOKIE_HTTPONLY=True,
+    REMEMBER_COOKIE_SAMESITE='Lax',
+    REMEMBER_COOKIE_SECURE=IS_PRODUCTION,
+    REMEMBER_COOKIE_DURATION=timedelta(days=60),
+)
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB uploads
 
 app.register_blueprint(user_routes, url_prefix='/api/users')
@@ -62,11 +81,18 @@ app.register_blueprint(wallet_routes, url_prefix='/api/wallet')
 app.register_blueprint(shop_routes, url_prefix='/api/shop')
 app.register_blueprint(group_routes, url_prefix='/api/groups')
 app.register_blueprint(settings_routes, url_prefix='/api/settings')
+app.register_blueprint(moderation_routes, url_prefix='/api/moderation')
 
 db.init_app(app)
 Migrate(app, db)
 
-CORS(app)
+# The web app and API share one origin, so cross-origin access is only opened
+# up in development (Vite dev server) or for origins listed in CORS_ORIGINS.
+_cors_origins = [o.strip() for o in os.environ.get('CORS_ORIGINS', '').split(',') if o.strip()]
+if _cors_origins:
+    CORS(app, origins=_cors_origins, supports_credentials=True)
+elif not IS_PRODUCTION:
+    CORS(app)
 
 @app.before_request
 def https_redirect():
@@ -107,11 +133,39 @@ def serve_upload(filename):
     return send_from_directory(uploads, filename, conditional=True)
 
 
+@app.route('/api/health')
+def health():
+    """Health check — confirms the server is up AND the database answers."""
+    try:
+        db.session.execute('SELECT 1')
+    except Exception:
+        db.session.rollback()
+        app.logger.exception('Health check: database unreachable')
+        return {'status': 'error', 'database': 'unreachable'}, 503
+    return {
+        'status': 'ok',
+        'database': db.engine.dialect.name,
+        'persistent': db.engine.dialect.name != 'sqlite',
+    }
+
+
+@app.route('/api/config')
+def public_config():
+    """Public launch settings the app reads on boot."""
+    return {
+        'purchases_enabled': demo_payments_enabled(),
+        'support_email': support_email(),
+        'minimum_age': minimum_age(),
+    }
+
+
 @app.route("/api/docs")
 def api_help():
     """
     Returns all API routes and their doc strings
     """
+    if IS_PRODUCTION:
+        return {'message': 'Not available'}, 404
     acceptable_methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
     route_list = { rule.rule: [[ method for method in rule.methods if method in acceptable_methods ],
                     app.view_functions[rule.endpoint].__doc__ ]
@@ -134,4 +188,19 @@ def react_root(path):
 
 @app.errorhandler(404)
 def not_found(e):
+    # Unknown API paths get a real JSON 404; everything else is a page route
+    # handled by the React router.
+    if request.path.startswith('/api/'):
+        return {'errors': {'message': 'Not found'}}, 404
     return app.send_static_file('index.html')
+
+
+@app.errorhandler(413)
+def too_large(e):
+    return {'error': 'That file is too large. The limit is 100MB.'}, 413
+
+
+@app.errorhandler(500)
+def server_error(e):
+    db.session.rollback()
+    return {'errors': {'message': 'Something went wrong. Please try again.'}}, 500

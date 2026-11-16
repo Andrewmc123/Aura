@@ -96,6 +96,9 @@ function LoginFormPage() {
         <p className="auth-footer">
           New to Aura? <Link to="/signup">Create an account</Link>
         </p>
+        <p className="auth-footer" style={{ marginTop: 10, fontSize: 12.5 }}>
+          <Link to="/terms">Terms</Link> · <Link to="/privacy">Privacy</Link> · <Link to="/support">Support</Link>
+        </p>
       </div>
     </div>
   );

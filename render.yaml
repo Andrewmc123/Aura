@@ -1,45 +1,63 @@
 # Render Blueprint for Aura — a Dockerized Flask + React web service.
 #
-# Deploy:
-#   Render Dashboard → New + → Blueprint → pick the CAPSTONE repo → Apply.
+# PRODUCTION SETUP (see LAUNCH_CHECKLIST.md for the step-by-step):
+#   * DATABASE_URL  → a persistent Postgres connection string (Neon or Render
+#                     Postgres). Paste it in the Render dashboard; it is never
+#                     stored in this file.
+#   * S3_*          → an S3-compatible bucket (Cloudflare R2 recommended) so
+#                     uploaded photos and videos survive redeploys.
 #
-# Database: defaults to a self-contained SQLite file (DATABASE_URL below) so the
-# app always boots with ZERO external setup. Demo data is (re)seeded on each
-# fresh boot. Data is not persistent across redeploys — fine for a demo.
-#
-# To upgrade to a PERSISTENT database later (e.g. Neon — free, serverless):
-#   1. set DATABASE_URL to the Neon Postgres connection string
-#   2. change FLASK_ENV to "production"  (enables the abln_schema)
-# No code changes needed — the app already supports both.
+# Until DATABASE_URL is a Postgres URL the app still boots on a throwaway
+# SQLite file with demo data, exactly like the old demo deploy. Nothing breaks,
+# but nothing is saved between deploys either.
 
 services:
   - type: web
     name: aura
     runtime: docker
+    # "free" sleeps after 15 idle minutes (30–60s cold start). Change to
+    # "starter" in the Render dashboard before launch.
     plan: free
     region: oregon
     branch: main
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    healthCheckPath: /api/docs
+    healthCheckPath: /api/health
     autoDeploy: true
     envVars:
       - key: FLASK_APP
         value: app
-      # "development" keeps SQLite-friendly behavior (no Postgres-only schema).
-      # Switch to "production" only together with a Postgres DATABASE_URL.
       - key: FLASK_ENV
-        value: development
+        value: production
       - key: SCHEMA
         value: abln_schema
       - key: SECRET_KEY
         generateValue: true
-      # Self-contained SQLite so the deploy always boots. Replace with a Neon
-      # Postgres URL (and set FLASK_ENV=production) for a persistent database.
+      # Paste your Postgres connection string in the dashboard.
       - key: DATABASE_URL
-        value: sqlite:////var/www/prod.db
+        sync: false
       - key: PYTHONUNBUFFERED
         value: "1"
-      # Optional: add your own Tenor key for higher GIF rate limits
+
+      # ── uploads (Cloudflare R2 / S3) — paste in the dashboard ──
+      - key: S3_BUCKET
+        sync: false
+      - key: S3_ENDPOINT_URL
+        sync: false
+      - key: S3_ACCESS_KEY_ID
+        sync: false
+      - key: S3_SECRET_ACCESS_KEY
+        sync: false
+      - key: S3_PUBLIC_URL
+        sync: false
+
+      # ── launch settings — paste in the dashboard ──
+      # Comma-separated emails allowed to review reports at /admin/reports
+      - key: ADMIN_EMAILS
+        sync: false
+      # Shown on the Privacy, Terms and Support pages
+      - key: SUPPORT_EMAIL
+        sync: false
+      # Optional: your own Tenor key for higher GIF rate limits
       # - key: TENOR_API_KEY
       #   sync: false

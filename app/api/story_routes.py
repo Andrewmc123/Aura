@@ -9,6 +9,7 @@ from flask import Blueprint, request
 from flask_login import login_required, current_user
 
 from ..models import db, Story
+from app.safety import hidden_user_ids, is_blocked_between, find_objectionable, OBJECTIONABLE_ERROR
 
 story_routes = Blueprint('stories', __name__)
 
@@ -26,6 +27,8 @@ def _purge_expired():
 def user_stories(user_id):
     """Active (non-expired) stories for one user, oldest first (reel order)."""
     _purge_expired()
+    if user_id in hidden_user_ids():
+        return {'stories': []}
     stories = (Story.query
                .filter(Story.user_id == user_id, Story.expires_at > datetime.utcnow())
                .order_by(Story.created_at.asc())
@@ -42,6 +45,8 @@ def create_story():
     media_url = (data.get('media_url') or '').strip()
     if not media_url:
         return {'error': 'A photo or video is required'}, 400
+    if find_objectionable(data.get('caption')):
+        return {'error': OBJECTIONABLE_ERROR}, 400
 
     now = datetime.utcnow()
     story = Story(

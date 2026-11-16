@@ -6,7 +6,7 @@ import {
   thunkUpdateSettings,
   thunkUpdateProfile,
 } from '../../redux/settings';
-import { thunkLogout, thunkAuthenticate } from '../../redux/session';
+import { thunkLogout, thunkAuthenticate, thunkDeleteAccount } from '../../redux/session';
 import { useModal } from '../../context/Modal';
 import EditProfileModal from '../UserProfilePage/EditProfileModal';
 import AccountPanel from './AccountPanel';
@@ -14,6 +14,7 @@ import GeneralPanel from './GeneralPanel';
 import PrivacyPanel from './PrivacyPanel';
 import NotificationsPanel from './NotificationsPanel';
 import AppearancePanel from './AppearancePanel';
+import { BlockedPanel, AboutPanel } from './SafetyPanels';
 import './SettingsPage.css';
 
 function SettingsPage() {
@@ -52,6 +53,13 @@ function SettingsPage() {
     navigate('/');
   };
 
+  // Resolves to null on success (we're signed out, so leave), or an error.
+  const handleDeleteAccount = async () => {
+    const error = await dispatch(thunkDeleteAccount());
+    if (!error) navigate('/');
+    return error;
+  };
+
   const handleEditProfile = () =>
     setModalContent(<EditProfileModal profile={user} onSaved={() => dispatch(thunkAuthenticate())} />);
 
@@ -69,14 +77,21 @@ function SettingsPage() {
         <h1 className="settings-title">Settings</h1>
       </div>
 
-      <AccountPanel user={user} onLogout={handleLogout} onEditProfile={handleEditProfile} />
+      <AccountPanel
+        user={user}
+        onLogout={handleLogout}
+        onEditProfile={handleEditProfile}
+        onDeleteAccount={handleDeleteAccount}
+      />
       <GeneralPanel
         user={user}
         onSaveProfile={(patch) => dispatch(thunkUpdateProfile(patch))}
       />
       <PrivacyPanel settings={settings} onChange={patchSettings} />
       <NotificationsPanel notifPrefs={settings?.notif_prefs} onChange={patchNotif} />
+      <BlockedPanel />
       <AppearancePanel />
+      <AboutPanel />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 from flask import Blueprint, request
 from flask_login import login_required, current_user
 from app.models import db, User, Follow, Notification
+from app.safety import hidden_user_ids, is_blocked_between, find_objectionable, OBJECTIONABLE_ERROR
 
 follow_routes = Blueprint('follows', __name__)
 
@@ -15,6 +16,9 @@ def follow_user(user_id):
     target = User.query.get(user_id)
     if not target:
         return {'error': 'User not found'}, 404
+
+    if is_blocked_between(current_user.id, user_id):
+        return {'error': "You can't follow this account"}, 403
 
     existing = Follow.query.filter_by(
         follower_id=current_user.id, followed_id=user_id).first()
@@ -103,6 +107,7 @@ def suggestions():
     if current_user.is_authenticated:
         exclude.add(current_user.id)
         exclude.update(f.followed_id for f in Follow.query.filter_by(follower_id=current_user.id).all())
+        exclude.update(hidden_user_ids())
 
     candidates = [u for u in users if u.id not in exclude]
     candidates.sort(key=lambda u: (len(u.followers), len(u.posts)), reverse=True)

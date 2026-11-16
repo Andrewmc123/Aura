@@ -44,6 +44,9 @@ def create_product():
     title = (data.get('title') or '').strip()
     if not title:
         return jsonify({'error': 'A product title is required'}), 400
+    from app.safety import find_objectionable, OBJECTIONABLE_ERROR
+    if find_objectionable(title, data.get('description')):
+        return jsonify({'error': OBJECTIONABLE_ERROR}), 400
 
     # accept either price (dollars) or price_cents
     price_cents = data.get('price_cents')
@@ -96,6 +99,11 @@ def place_order():
     """Place an order. Totals are computed SERVER-SIDE from real product prices
     (never trust the client). Demo payment — no real charge; we keep only the
     card's last 4 for the receipt and never the full number."""
+    from app.features import demo_payments_enabled
+    if not demo_payments_enabled():
+        # The built-in checkout is a demo that never charges anyone. It stays
+        # off in production until a real payment provider is connected.
+        return jsonify({'error': 'Checkout is coming soon.', 'coming_soon': True}), 503
     data = request.get_json() or {}
     raw_items = data.get('items') or []
     ship = data.get('shipping') or {}

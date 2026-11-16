@@ -94,6 +94,9 @@ def post_message(group_id):
     media_type = data.get('media_type') or 'text'
     if not content and not media_url:
         return jsonify({'error': 'Empty message'}), 400
+    from app.safety import find_objectionable, OBJECTIONABLE_ERROR
+    if find_objectionable(content):
+        return jsonify({'error': OBJECTIONABLE_ERROR}), 400
     msg = GroupMessage(
         group_id=group_id,
         user_id=current_user.id,

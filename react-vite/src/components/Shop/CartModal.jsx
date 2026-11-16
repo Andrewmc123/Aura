@@ -6,6 +6,7 @@ import {
 import { useModal } from "../../context/Modal";
 import LoginFormModal from "../LoginFormModal";
 import { useCart, setQty, removeFromCart, clearCart } from "../../utils/cart";
+import { useAppConfig } from "../../utils/safety";
 
 const money = (c) => `$${((c || 0) / 100).toFixed(2)}`;
 const FREE_SHIP = 5000;
@@ -14,6 +15,7 @@ const FLAT_SHIP = 599;
 export default function CartModal({ startStep = "cart" }) {
   const { setModalContent, closeModal } = useModal();
   const user = useSelector((s) => s.session.user);
+  const { purchases_enabled: checkoutEnabled } = useAppConfig();
   const items = useCart();
   const [step, setStep] = useState(startStep === "checkout" && items.length ? "checkout" : "cart");
   const [busy, setBusy] = useState(false);
@@ -30,6 +32,7 @@ export default function CartModal({ startStep = "cart" }) {
   const goCheckout = () => {
     if (!user) return setModalContent(<LoginFormModal />);
     if (!items.length) return;
+    if (!checkoutEnabled) return setError("Checkout is coming soon. Your cart is saved for later.");
     setError("");
     setStep("checkout");
   };
@@ -94,7 +97,7 @@ export default function CartModal({ startStep = "cart" }) {
   }
 
   // ---------- checkout ----------
-  if (step === "checkout") {
+  if (step === "checkout" && checkoutEnabled) {
     return (
       <div className="cart-modal">
         <div className="cart-head">
@@ -182,6 +185,7 @@ export default function CartModal({ startStep = "cart" }) {
             <p className="cart-freeship">Add {money(FREE_SHIP - subtotal)} more for free shipping 🚚</p>
           )}
 
+          {error && <p className="cart-error">{error}</p>}
           <button className="btn btn-primary cart-checkout-btn" onClick={goCheckout}>
             {user ? "Checkout" : "Log in to checkout"} · {money(total)}
           </button>

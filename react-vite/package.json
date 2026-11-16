@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@capacitor/core": "^8.6.2",
+    "@capacitor/ios": "^8.6.2",
     "js-cookie": "^3.0.5",
     "lucide-react": "^0.540.0",
     "react": "^18.2.0",
@@ -21,6 +23,7 @@
     "redux-thunk": "^2.4.2"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.6.2",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
     "@vitejs/plugin-react": "^4.0.3",
