@@ -1,131 +1,97 @@
-# Flask React Project
+# Aura
 
-This is the starter for the Flask React project.
+**Share your aura with the world.** Aura is a short-video social app: record, post, go live, and connect with the people who match your energy.
 
-## Getting started
+**Live app:** https://aura-x2a4.onrender.com
 
-1. Clone this repository (only this branch).
+## Features
 
-2. Install dependencies.
+- **Feed** — full-screen, swipeable short videos, photos, carousels and GIFs
+- **Create** — in-app camera, upload studio with filters, sounds and text
+- **Stories** — posts that disappear after 24 hours
+- **Live** — live streams with chat and gifts
+- **Social** — follows, friends, comments, direct messages and group chats
+- **Aura score** — creators earn Aura and unlock tiers as people engage
+- **Explore** — trending hashtags, sounds, creators and search
+- **Shop** — creator product listings
+- **Safety** — report and block tools, content filter, moderation queue, account deletion
 
-   ```bash
-   pipenv install -r requirements.txt
-   ```
+## Tech stack
 
-3. Create a __.env__ file based on the example with proper settings for your
-   development environment.
+| Layer | Tools |
+| --- | --- |
+| Frontend | React 18, Redux, React Router, Vite |
+| Backend | Python, Flask, SQLAlchemy, Alembic |
+| Database | PostgreSQL in production, SQLite for local development |
+| Media storage | S3-compatible bucket (Cloudflare R2) |
+| Hosting | Render (Docker) |
+| iOS | Capacitor |
 
-4. Make sure the SQLite3 database connection URL is in the __.env__ file.
+## Run it locally
 
-5. This starter organizes all tables inside the `flask_schema` schema, defined
-   by the `SCHEMA` environment variable.  Replace the value for
-   `SCHEMA` with a unique name, **making sure you use the snake_case
-   convention.**
+You need Python 3.9+ and Node 22+.
 
-6. Get into your pipenv, migrate your database, seed your database, and run your
-   Flask app:
+**1. Backend**
 
-   ```bash
-   pipenv shell
-   ```
+```bash
+python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env
+flask db upgrade
+flask seed all                   # optional demo content
+flask run
+```
 
-   ```bash
-   flask db upgrade
-   ```
+**2. Frontend** (in a second terminal)
 
-   ```bash
-   flask seed all
-   ```
+```bash
+cd react-vite
+npm install
+npm run dev
+```
 
-   ```bash
-   flask run
-   ```
+The app opens at http://localhost:5173 and talks to the Flask server on port 5000.
 
-7. The React frontend has no styling applied. Copy the __.css__ files from your
-   Authenticate Me project into the corresponding locations in the
-   __react-vite__ folder to give your project a unique look.
+## Configuration
 
-8. To run the React frontend in development, `cd` into the __react-vite__
-   directory and run `npm i` to install dependencies. Next, run `npm run build`
-   to create the `dist` folder. The starter has modified the `npm run build`
-   command to include the `--watch` flag. This flag will rebuild the __dist__
-   folder whenever you change your code, keeping the production version up to
-   date.
+All settings are environment variables. `.env.example` lists every one with a short explanation. The important ones for production:
 
-## Deployment through Render.com
+| Variable | Purpose |
+| --- | --- |
+| `DATABASE_URL` | PostgreSQL connection string |
+| `SECRET_KEY` | Signs login sessions |
+| `S3_BUCKET`, `S3_ENDPOINT_URL`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_PUBLIC_URL` | Where uploaded media is stored |
+| `ADMIN_EMAILS` | Accounts allowed to review reports at `/admin/reports` |
+| `SUPPORT_EMAIL` | Contact address shown on the Privacy, Terms and Support pages |
 
-First, recall that Vite is a development dependency, so it will not be used in
-production. This means that you must already have the __dist__ folder located in
-the root of your __react-vite__ folder when you push to GitHub. This __dist__
-folder contains your React code and all necessary dependencies minified and
-bundled into a smaller footprint, ready to be served from your Python API.
+## Deploying
 
-Begin deployment by running `npm run build` in your __react-vite__ folder and
-pushing any changes to GitHub.
+The app deploys to Render from `render.yaml`. Every push to `main` triggers a new deploy.
 
-Refer to your Render.com deployment articles for more detailed instructions
-about getting started with [Render.com], creating a production database, and
-deployment debugging tips.
+The production frontend is served by Flask from `react-vite/dist`, which is committed to the repo. After changing frontend code, rebuild it before pushing:
 
-From the Render [Dashboard], click on the "New +" button in the navigation bar,
-and click on "Web Service" to create the application that will be deployed.
+```bash
+cd react-vite
+npm run build
+```
 
-Select that you want to "Build and deploy from a Git repository" and click
-"Next". On the next page, find the name of the application repo you want to
-deploy and click the "Connect" button to the right of the name.
+`GET /api/health` reports whether the server and database are healthy.
 
-Now you need to fill out the form to configure your app. Most of the setup will
-be handled by the __Dockerfile__, but you do need to fill in a few fields.
+## Project structure
 
-Start by giving your application a name.
+```
+app/            Flask API, models, seed data
+migrations/     Database migrations
+react-vite/     React frontend and Capacitor (iOS) config
+brand/          Logo and video brand assets
+render.yaml     Render deployment settings
+```
 
-Make sure the Region is set to the location closest to you, the Branch is set to
-"main", and Runtime is set to "Docker". You can leave the Root Directory field
-blank. (By default, Render will run commands from the root directory.)
+## Launch status
 
-Select "Free" as your Instance Type.
+Steps remaining before the App Store release are tracked in [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md).
 
-### Add environment variables
+---
 
-In the development environment, you have been securing your environment
-variables in a __.env__ file, which has been removed from source control (i.e.,
-the file is gitignored). In this step, you will need to input the keys and
-values for the environment variables you need for production into the Render
-GUI.
-
-Add the following keys and values in the Render GUI form:
-
-- SECRET_KEY (click "Generate" to generate a secure secret for production)
-- FLASK_ENV production
-- FLASK_APP app
-- SCHEMA (your unique schema name, in snake_case)
-
-In a new tab, navigate to your dashboard and click on your Postgres database
-instance.
-
-Add the following keys and values:
-
-- DATABASE_URL (copy value from the **External Database URL** field)
-
-**Note:** Add any other keys and values that may be present in your local
-__.env__ file. As you work to further develop your project, you may need to add
-more environment variables to your local __.env__ file. Make sure you add these
-environment variables to the Render GUI as well for the next deployment.
-
-### Deploy
-
-Now you are finally ready to deploy! Click "Create Web Service" to deploy your
-project. The deployment process will likely take about 10-15 minutes if
-everything works as expected. You can monitor the logs to see your Dockerfile
-commands being executed and any errors that occur.
-
-When deployment is complete, open your deployed site and check to see that you
-have successfully deployed your Flask application to Render! You can find the
-URL for your site just below the name of the Web Service at the top of the page.
-
-**Note:** By default, Render will set Auto-Deploy for your project to true. This
-setting will cause Render to re-deploy your application every time you push to
-main, always keeping it up to date.
-
-[Render.com]: https://render.com/
-[Dashboard]: https://dashboard.render.com/
+© 2026 Aura. All rights reserved.

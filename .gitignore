@@ -7,3 +7,7 @@ __pycache__/
 
 # user-uploaded media (videos, covers, recorded audio)
 app/uploads/
+
+# local development database
+instance/
+*.db
