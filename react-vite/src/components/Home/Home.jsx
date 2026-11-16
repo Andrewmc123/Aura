@@ -2,12 +2,14 @@ import { useNavigate, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { FaPlay, FaFire, FaWandMagicSparkles, FaCommentDots } from "react-icons/fa6";
 import { thunkLogin } from "../../redux/session";
+import { useAppConfig } from "../../utils/safety";
 import "./Home.css";
 
 export default function Home() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const user = useSelector((s) => s.session.user);
+  const { demo_available: demoAvailable } = useAppConfig();
 
   const demoLogin = async () => {
     await dispatch(thunkLogin({ email: "demo@aa.io", password: "password" }));
@@ -41,14 +43,16 @@ export default function Home() {
             <>
               <Link to="/signup" className="btn btn-primary landing-btn">Sign up free</Link>
               <Link to="/login" className="btn btn-ghost landing-btn">Log in</Link>
-              <button onClick={demoLogin} className="btn btn-orange landing-btn">
-                Try the demo ✨
-              </button>
+              {demoAvailable && (
+                <button onClick={demoLogin} className="btn btn-orange landing-btn">
+                  Try the demo ✨
+                </button>
+              )}
             </>
           )}
         </div>
 
-        <p className="landing-note">For night owls of all ages 🌙 — family-friendly GIFs powered by Tenor</p>
+        <p className="landing-note">For night owls 13 and up 🌙 · GIFs powered by Tenor</p>
       </main>
     </div>
   );

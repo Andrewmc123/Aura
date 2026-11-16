@@ -18,7 +18,7 @@
   /* text */
   --text: #f4f2f8;
   --text-dim: #a99fb8;
-  --text-faint: #6f6680;
+  --text-faint: #8f86a3;   /* raised so small labels stay readable */
 
   /* brand — purple + gold signature */
   --neon: #a855f7;
@@ -52,10 +52,11 @@
 
   --text: #1c1030;
   --text-dim: #6a5d7e;
-  --text-faint: #9a8fb2;
+  --text-faint: #75698c;
 
   --neon: #7c3aed;        /* deeper purple so it reads on white */
-  --orange: #b5860b;      /* deeper gold so it reads on white */
+  --orange: #8f6a00;      /* deeper gold so it reads on white */
+  --heart: #d91a48;       /* deeper red so it reads on white */
   --neon-soft: rgba(124, 58, 237, 0.12);
   --orange-soft: rgba(181, 134, 11, 0.14);
   --accent-fg: #ffffff;   /* white text on the deeper light-mode accents */
@@ -275,3 +276,20 @@ img { -webkit-user-drag: none; }
   from { background-position: 100% 0; }
   to { background-position: -100% 0; }
 }
+
+/* ---------- readability fixes (contrast audit) ---------- */
+:root[data-theme="light"] .mtopbar { background: rgba(255, 255, 255, 0.9); }
+.feed-tabs-solid .feed-tab { color: var(--text-dim); }
+.feed-tabs-solid .feed-tab:hover,
+.feed-tabs-solid .feed-tab.active { color: var(--text); }
+/* tabs over videos: a soft shadow keeps them legible on bright footage */
+.feed-tabs-overlay .feed-tab { text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55); }
+.live-badge { background: #e11d48; }
+:root[data-theme="light"] .group-cat-nba { color: #7a5a00; }
+:root[data-theme="light"] .group-cat-politics { color: #2f55c7; }
+.chip.active { color: var(--text); }
+.bubble-row.mine .bubble { color: var(--accent-fg); }
+.vgrid-gif-badge { color: var(--accent-fg); }
+.live-viewers { background: rgba(0, 0, 0, 0.72); }
+.group-cat-baddies { color: #ff7a93; }
+:root[data-theme="light"] .group-cat-baddies { color: #b3123a; }

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { thunkLogin } from "../../redux/session";
 import { useDispatch } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
+import { useAppConfig } from "../../utils/safety";
 import "./LoginForm.css";
 
 function LoginFormPage() {
@@ -11,6 +12,7 @@ function LoginFormPage() {
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const { demo_available: demoAvailable } = useAppConfig();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -81,16 +83,19 @@ function LoginFormPage() {
             {isLoading ? "Signing in…" : "Log in"}
           </button>
 
-          <div className="auth-divider"><span>or</span></div>
-
-          <button
-            type="button"
-            className="btn btn-orange auth-submit"
-            onClick={handleDemoLogin}
-            disabled={isLoading}
-          >
-            ✨ Try the demo account
-          </button>
+          {demoAvailable && (
+            <>
+              <div className="auth-divider"><span>or</span></div>
+              <button
+                type="button"
+                className="btn btn-orange auth-submit"
+                onClick={handleDemoLogin}
+                disabled={isLoading}
+              >
+                ✨ Try the demo account
+              </button>
+            </>
+          )}
         </form>
 
         <p className="auth-footer">

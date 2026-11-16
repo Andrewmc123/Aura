@@ -12,6 +12,7 @@ from sqlalchemy import and_, or_
 from sqlalchemy.orm import joinedload, selectinload
 
 from app.models import Post, User
+from app.sounds import build_sound_catalog
 
 discover_routes = Blueprint('discover', __name__)
 
@@ -21,27 +22,6 @@ POST_OPTS = lambda: (
     selectinload(Post.comments),
     selectinload(Post.bookmarks),
 )
-
-# Built-in sound library for the Upload Studio (royalty-free SoundHelix tracks)
-SOUND_LIBRARY = [
-    {'id': 's1',  'name': 'About Last Night (Anthem)', 'artist': 'DJ Verde',          'emoji': '🌃', 'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'},
-    {'id': 's2',  'name': 'Neon Nights',               'artist': 'ABLN House Band',   'emoji': '💚', 'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3'},
-    {'id': 's3',  'name': 'Midnight Drive',            'artist': 'Citrus Wave',       'emoji': '🚗', 'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3'},
-    {'id': 's4',  'name': 'Glow Up',                   'artist': 'The After Hours',   'emoji': '✨', 'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3'},
-    {'id': 's5',  'name': 'Last Call',                 'artist': 'Velvet Static',     'emoji': '🍹', 'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3'},
-    {'id': 's6',  'name': '2AM Energy',                'artist': 'MC Ember',          'emoji': '⚡', 'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3'},
-    {'id': 's7',  'name': 'Rooftop Sunrise',           'artist': 'Lone Disco',        'emoji': '🌅', 'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3'},
-    {'id': 's8',  'name': 'Bass in the Basement',      'artist': 'Subwoofer Society', 'emoji': '🔊', 'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3'},
-    {'id': 's9',  'name': 'Confetti Rain',             'artist': 'Party Theory',      'emoji': '🎉', 'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3'},
-    {'id': 's10', 'name': 'Strobe Light Heartbeat',    'artist': 'Nightcap',          'emoji': '🪩', 'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3'},
-    {'id': 's11', 'name': 'Dance Floor Gravity',       'artist': 'Orbit Club',        'emoji': '🕺', 'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-11.mp3'},
-    {'id': 's12', 'name': 'Afterglow',                 'artist': 'Sunset Karaoke',    'emoji': '🧡', 'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-12.mp3'},
-    {'id': 's13', 'name': 'Golden Hour Groove',        'artist': 'Polaroid Funk',     'emoji': '📸', 'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3'},
-    {'id': 's14', 'name': 'City Lights Lullaby',       'artist': 'Skyline Echo',      'emoji': '🌆', 'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-14.mp3'},
-    {'id': 's15', 'name': 'Weekend Forecast',          'artist': 'The Vibe Bureau',   'emoji': '🌦️', 'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3'},
-    {'id': 's16', 'name': 'Encore Encore',             'artist': 'Stagedive Social',  'emoji': '🎤', 'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-16.mp3'},
-    {'id': 's17', 'name': 'Sunrise Cleanup Crew',      'artist': 'Morning After',     'emoji': '🧹', 'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-17.mp3'},
-]
 
 # Explore category → caption keywords
 CATEGORY_KEYWORDS = {
@@ -256,5 +236,10 @@ def search():
 
 @discover_routes.route('/sounds')
 def sounds():
-    """Built-in sound library for the Upload Studio — public."""
-    return {'sounds': SOUND_LIBRARY}
+    """Sound library for the Upload Studio — public.
+
+    Returns the full library, a Trending list ranked by how many posts use
+    each sound, and original audio from recent videos that can be reused.
+    """
+    posts = Post.query.options(joinedload(Post.user), selectinload(Post.likes)).all()
+    return build_sound_catalog(posts, hidden_user_ids())

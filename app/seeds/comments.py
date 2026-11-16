@@ -16,13 +16,13 @@ TRENDY_COMMENTS = [
     "Vibes immaculate BRO 😭",
     "That party looks crazyyyyy!!",
     "LOL WHERE WAS I !!",
-    "this is why I open ABLN every morning",
+    "this is why I open Aura every morning",
     "sound name?? I need it 🎵",
     "teach me this PLEASE",
     "nahhh this one's going viral 📈",
     "the way I RAN to the comments",
     "petition to make this the app intro",
-    "POV: you found the best side of ABLN",
+    "POV: you found the best side of Aura",
     "screaming crying throwing confetti 🎉",
 ]
 

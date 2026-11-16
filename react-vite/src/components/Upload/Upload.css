@@ -447,7 +447,7 @@ button.studio-alt-card:hover { border-color: var(--orange); }
 }
 .cam-sheet-title { display: flex; align-items: center; gap: 8px; margin: 2px 0 12px; font-size: 17px; }
 .cam-sheet-title svg { color: var(--orange); }
-.cam-sound-list { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+.cam-sound-list { min-height: 0; flex: 1; }
 .cam-sound-done { margin-top: 12px; }
 
 @media (max-width: 768px) {
@@ -585,7 +585,8 @@ button.studio-alt-card:hover { border-color: var(--orange); }
 .text-fonts { display: flex; gap: 8px; flex-wrap: wrap; }
 .text-delete { align-self: flex-start; color: var(--heart); border-color: rgba(255,59,92,.4); }
 
-.sound-panel { display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow-y: auto; }
+.sound-panel { display: flex; flex-direction: column; gap: 8px; }
+.sound-panel .sound-list { max-height: 300px; }
 .sound-row {
   display: flex;
   align-items: center;
@@ -731,3 +732,50 @@ button.studio-alt-card:hover { border-color: var(--orange); }
   font-weight: 700;
   cursor: pointer;
 }
+
+/* ---------- sound picker (search, tabs, list) ---------- */
+.sound-picker { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.sound-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text-faint);
+}
+.sound-search input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 0;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 14px;
+}
+.sound-search input::placeholder { color: var(--text-faint); }
+.sound-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.sound-tabs::-webkit-scrollbar { display: none; }
+.sound-tab {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg-card);
+  color: var(--text-dim);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.sound-tab.on { background: var(--orange-soft); border-color: var(--orange); color: var(--text); }
+.sound-list { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; min-height: 0; }
+.sound-meta { min-width: 0; text-align: left; }
+.sound-meta strong, .sound-meta em { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* sound sheet sits above every camera control (record length, flip ...) */
+.cam-gif-sheet { z-index: 30; }
+.sound-tabs { flex-shrink: 0; }
+.sound-search { flex-shrink: 0; }
+.sound-tab { line-height: 1.2; }

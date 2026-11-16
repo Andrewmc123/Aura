@@ -35,7 +35,9 @@ def get_friend_ids(user_id):
 
 
 def engagement_score(post):
-    """For You ranking: engagement weighted with a gentle recency decay."""
+    """Aura Worldwide ranking: engagement with a gentle recency decay, plus a
+    head start for brand-new posts so a first video from a new creator gets
+    seen instead of sinking under older, already-popular ones."""
     now = datetime.utcnow()
     created = post.created_at or now
     age_hours = max(1.0, (now - created).total_seconds() / 3600)
@@ -46,7 +48,20 @@ def engagement_score(post):
         + (post.views or 0) * 0.05
         + len(post.bookmarks) * 3
     )
-    return raw / (age_hours ** 0.25)
+    fresh_boost = 60 / (1 + age_hours / 12)   # ~60 at posting, ~20 after a day
+    return raw / (age_hours ** 0.25) + fresh_boost
+
+
+def spread_creators(posts):
+    """Keep the ranked order but avoid showing the same creator twice in a
+    row, so the feed feels like everyone rather than one account on repeat."""
+    remaining = list(posts)
+    out = []
+    while remaining:
+        last = out[-1].user_id if out else None
+        pick = next((i for i, p in enumerate(remaining) if p.user_id != last), 0)
+        out.append(remaining.pop(pick))
+    return out
 
 
 def paginate(items, page, per_page):
@@ -83,8 +98,11 @@ def get_feed():
         posts = query.filter(Post.user_id.in_(friend_ids)).order_by(Post.created_at.desc()).all()
         chunk, has_more = paginate(posts, page, per_page)
     else:
+        # Aura Worldwide: every public post from everyone on Aura (minus
+        # anyone you've blocked), ranked — not limited to who you follow.
         posts = query.all()
         posts.sort(key=engagement_score, reverse=True)
+        posts = spread_creators(posts)
         chunk, has_more = paginate(posts, page, per_page)
 
     uid = viewer_id()

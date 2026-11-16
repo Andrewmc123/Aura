@@ -30,7 +30,7 @@ export async function fetchBlocked() {
 }
 
 // ---- public launch settings (/api/config), fetched once and shared ----
-const DEFAULT_CONFIG = { purchases_enabled: false, support_email: "", minimum_age: 13 };
+const DEFAULT_CONFIG = { purchases_enabled: false, support_email: "", minimum_age: 13, demo_available: false };
 let configPromise = null;
 
 export function loadAppConfig() {

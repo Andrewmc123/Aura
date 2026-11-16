@@ -152,7 +152,13 @@ def health():
 @app.route('/api/config')
 def public_config():
     """Public launch settings the app reads on boot."""
+    try:
+        demo_available = User.query.filter_by(email='demo@aa.io').first() is not None
+    except Exception:
+        db.session.rollback()
+        demo_available = False
     return {
+        'demo_available': demo_available,
         'purchases_enabled': demo_payments_enabled(),
         'support_email': support_email(),
         'minimum_age': minimum_age(),

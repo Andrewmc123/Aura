@@ -235,3 +235,5 @@
 @media (prefers-reduced-motion: reduce) {
   .live-discover { transition: none; }
 }
+.live-card-info { width: 100%; min-width: 0; box-sizing: border-box; }
+.live-card-info strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

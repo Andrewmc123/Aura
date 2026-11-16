@@ -7,6 +7,7 @@ import {
   FaCameraRotate, FaBolt, FaClock, FaCircleHalfStroke,
 } from "react-icons/fa6";
 import { thunkCreatePost } from "../../redux/posts";
+import SoundPicker from "./SoundPicker";
 import { FILTERS, TEXT_COLORS, TEXT_FONTS, filterCss } from "../../utils/filters";
 import GifPicker from "../Feed/GifPicker";
 import { splitCaption } from "../../utils/format";
@@ -81,7 +82,7 @@ export default function UploadStudio() {
   const [trim, setTrim] = useState(null); // {start, end}
   const [texts, setTexts] = useState([]);
   const [selectedTextId, setSelectedTextId] = useState(null);
-  const [sounds, setSounds] = useState([]);
+  const [soundCatalog, setSoundCatalog] = useState(null);
   const [pickedSound, setPickedSound] = useState(null);
   const [videoVolume, setVideoVolume] = useState(1);
   const [soundVolume, setSoundVolume] = useState(0.9);
@@ -290,7 +291,7 @@ export default function UploadStudio() {
   useEffect(() => {
     fetch("/api/discover/sounds")
       .then((r) => r.json())
-      .then((d) => setSounds(d.sounds || []))
+      .then((d) => setSoundCatalog(d))
       .catch(() => {});
   }, []);
 
@@ -669,23 +670,12 @@ export default function UploadStudio() {
             <div className="cam-gif-sheet" onClick={() => setCamSoundOpen(false)}>
               <div className="cam-sound-inner" onClick={(e) => e.stopPropagation()}>
                 <h3 className="cam-sheet-title"><FaMusic /> Add a sound</h3>
-                <div className="cam-sound-list">
-                  {sounds.length === 0 && <p className="studio-hint">No sounds available right now.</p>}
-                  {sounds.map((s) => (
-                    <button
-                      key={s.id}
-                      className={`sound-row ${pickedSound?.id === s.id ? "on" : ""}`}
-                      onClick={() => setPickedSound((cur) => (cur?.id === s.id ? null : s))}
-                    >
-                      <span className="sound-emoji">{s.emoji}</span>
-                      <span className="sound-meta">
-                        <strong>{s.name}</strong>
-                        <em>{s.artist}</em>
-                      </span>
-                      {pickedSound?.id === s.id && <span className="sound-on">✓</span>}
-                    </button>
-                  ))}
-                </div>
+                <SoundPicker
+                  className="cam-sound-list"
+                  catalog={soundCatalog}
+                  pickedId={pickedSound?.id}
+                  onPick={(snd) => setPickedSound((cur) => (cur?.id === snd.id ? null : snd))}
+                />
                 <button className="btn btn-grad cam-sound-done" onClick={() => setCamSoundOpen(false)}>Done</button>
               </div>
             </div>
@@ -839,20 +829,7 @@ export default function UploadStudio() {
 
               {editTool === "sound" && (
                 <div className="sound-panel">
-                  {sounds.map((s) => (
-                    <button
-                      key={s.id}
-                      className={`sound-row ${pickedSound?.id === s.id ? "on" : ""}`}
-                      onClick={() => auditionSound(s)}
-                    >
-                      <span className="sound-emoji">{s.emoji}</span>
-                      <span className="sound-meta">
-                        <strong>{s.name}</strong>
-                        <em>{s.artist}</em>
-                      </span>
-                      {pickedSound?.id === s.id && <span className="sound-on">✓</span>}
-                    </button>
-                  ))}
+                  <SoundPicker catalog={soundCatalog} pickedId={pickedSound?.id} onPick={auditionSound} />
                   {pickedSound && (
                     <div className="mix-panel">
                       <label className="studio-hint">Original audio: {Math.round(videoVolume * 100)}%</label>

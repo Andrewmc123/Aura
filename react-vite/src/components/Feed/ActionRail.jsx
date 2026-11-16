@@ -163,7 +163,7 @@ export default function ActionRail({ post, onOpenComments }) {
         {shareOpen && <ShareSheet post={post} onClose={() => setShareOpen(false)} />}
       </div>
 
-      <div className="rail-views"><FaEye /> {compact(post.views)} views</div>
+      <div className="rail-views" aria-label={`${compact(post.views)} views`}><FaEye /><span>{compact(post.views)}</span><span className="rail-views-label">views</span></div>
     </aside>
   );
 }
