@@ -5,7 +5,6 @@ import LoginFormPage from "../components/LoginFormPage";
 import SignupFormPage from "../components/SignupFormPage";
 import Home from "../components/Home/Home";
 import Feed from "../components/Feed";
-import Discover from "../components/Discover/Discover";
 import SingleVideo from "../components/SingleVideo";
 import Explore from "../components/Explore";
 import HashtagPage from "../components/HashtagPage";
@@ -39,9 +38,8 @@ const createAppRouter = () => {
     {
       element: <Layout />,
       children: [
-        { path: "/", element: <Discover /> },
-        { path: "/watch", element: <Feed tab="foryou" /> },
-        { path: "/following", element: <Navigate to="/" replace /> },
+        { path: "/", element: <Feed tab="foryou" /> },
+        { path: "/following", element: <Feed tab="following" /> },
         { path: "/network", element: <Network /> },
         { path: "/video/:postId", element: <SingleVideo /> },
         { path: "/explore", element: <Explore /> },

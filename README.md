@@ -6,7 +6,7 @@
 
 ## Features
 
-- **Discover** — story row and a card feed of videos, photos and GIFs, with a full-screen player
+- **Feed** — full-screen, swipeable short videos, photos, carousels and GIFs
 - **Create** — in-app camera, upload studio with filters, sounds and text
 - **Stories** — posts that disappear after 24 hours
 - **Live** — live streams with chat and gifts
@@ -91,8 +91,6 @@ render.yaml     Render deployment settings
 ## Launch status
 
 Steps remaining before the App Store release are tracked in [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md).
-
-The original full-screen design is kept under the git tag `original-v1`.
 
 ---
 

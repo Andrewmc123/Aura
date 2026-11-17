@@ -293,16 +293,3 @@ img { -webkit-user-drag: none; }
 .live-viewers { background: rgba(0, 0, 0, 0.72); }
 .group-cat-baddies { color: #ff7a93; }
 :root[data-theme="light"] .group-cat-baddies { color: #b3123a; }
-
-/* ---------- Aura V2: purple glow behind every screen ---------- */
-body {
-  background:
-    radial-gradient(120% 60% at 30% -10%, rgba(126, 46, 196, 0.55) 0%, rgba(60, 20, 104, 0.25) 45%, transparent 70%),
-    var(--bg);
-  background-attachment: fixed;
-}
-:root[data-theme="light"] body {
-  background:
-    radial-gradient(120% 60% at 30% -10%, rgba(196, 150, 255, 0.45) 0%, transparent 65%),
-    var(--bg);
-}

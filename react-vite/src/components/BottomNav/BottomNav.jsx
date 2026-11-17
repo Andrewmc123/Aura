@@ -1,15 +1,13 @@
 import { NavLink } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { FiHome, FiSearch, FiPlus, FiMessageCircle, FiUser } from "react-icons/fi";
+import { FaHouse, FaCompass, FaInbox, FaUser } from "react-icons/fa6";
 import { useModal } from "../../context/Modal";
 import LoginFormModal from "../LoginFormModal";
 import "./BottomNav.css";
 
-// Floating glass nav: five icons in a rounded pill that hovers above the
-// content, with a glowing purple create button in the middle.
 export default function BottomNav() {
   const user = useSelector((s) => s.session.user);
-  const unread = useSelector((s) => s.messages?.unreadTotal || 0);
+  const unread = useSelector((s) => s.notifications?.unreadCount || 0);
   const { setModalContent } = useModal();
 
   const requireLogin = (e) => {
@@ -19,30 +17,37 @@ export default function BottomNav() {
     }
   };
 
-  const item = ({ isActive }) => `fnav-item ${isActive ? "active" : ""}`;
-
   return (
-    <nav className="fnav" aria-label="Main">
-      <div className="fnav-pill">
-        <NavLink to="/" end className={item} aria-label="Home"><FiHome /></NavLink>
-        <NavLink to="/explore" className={item} aria-label="Search and explore"><FiSearch /></NavLink>
-        <NavLink to="/upload" onClick={requireLogin} className="fnav-create" aria-label="Create">
-          <FiPlus />
+    <nav className="bottomnav">
+      <NavLink to="/" end className={({ isActive }) => `bn-item ${isActive ? "active" : ""}`}>
+        <FaHouse />
+        <span>Home</span>
+      </NavLink>
+      <NavLink to="/explore" className={({ isActive }) => `bn-item ${isActive ? "active" : ""}`}>
+        <FaCompass />
+        <span>Explore</span>
+      </NavLink>
+      <NavLink to="/upload" onClick={requireLogin} className="bn-create" aria-label="Upload">
+        <span className="bn-create-pill">+</span>
+      </NavLink>
+      <NavLink to="/inbox" onClick={requireLogin} className={({ isActive }) => `bn-item ${isActive ? "active" : ""}`}>
+        <span className="bn-badge-wrap">
+          <FaInbox />
+          {user && unread > 0 && <em>{unread > 9 ? "9+" : unread}</em>}
+        </span>
+        <span>Inbox</span>
+      </NavLink>
+      {user ? (
+        <NavLink to={`/users/${user.id}`} className={({ isActive }) => `bn-item ${isActive ? "active" : ""}`}>
+          <FaUser />
+          <span>Profile</span>
         </NavLink>
-        <NavLink to="/messages" onClick={requireLogin} className={item} aria-label="Messages">
-          <span className="fnav-badge-wrap">
-            <FiMessageCircle />
-            {user && unread > 0 && <em>{unread > 9 ? "9+" : unread}</em>}
-          </span>
-        </NavLink>
-        {user ? (
-          <NavLink to={`/users/${user.id}`} className={item} aria-label="Profile"><FiUser /></NavLink>
-        ) : (
-          <button type="button" className="fnav-item" onClick={() => setModalContent(<LoginFormModal />)} aria-label="Log in">
-            <FiUser />
-          </button>
-        )}
-      </div>
+      ) : (
+        <button className="bn-item as-button" onClick={() => setModalContent(<LoginFormModal />)}>
+          <FaUser />
+          <span>Log in</span>
+        </button>
+      )}
     </nav>
   );
 }

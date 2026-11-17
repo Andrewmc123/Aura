@@ -22,7 +22,6 @@ export default function CommentsDrawer({ post, onClose, targetCommentId }) {
   const { setModalContent } = useModal();
 
   const [comments, setComments] = useState([]);
-  const [sort, setSort] = useState("popular"); // popular | newest
   const [loading, setLoading] = useState(true);
   const [body, setBody] = useState("");
   const [pendingGif, setPendingGif] = useState(null);
@@ -159,15 +158,7 @@ export default function CommentsDrawer({ post, onClose, targetCommentId }) {
       <div className="cdrawer-backdrop" onClick={onClose} />
       <div className="cdrawer fade-in">
       <div className="cdrawer-head">
-        <span className="cdrawer-grab" aria-hidden="true" />
         <h3>Comments <span className="text-dim">({compact(post.comment_count)})</span></h3>
-        <label className="cdrawer-sort">
-          <span className="sr-only">Sort comments</span>
-          <select value={sort} onChange={(e) => setSort(e.target.value)}>
-            <option value="popular">by popular</option>
-            <option value="newest">newest</option>
-          </select>
-        </label>
         <button className="cdrawer-close" onClick={onClose} aria-label="Close comments"><FaXmark /></button>
       </div>
 
@@ -189,10 +180,7 @@ export default function CommentsDrawer({ post, onClose, targetCommentId }) {
           </div>
         )}
 
-        {(sort === "popular"
-          ? [...comments].sort((a, b) => (b.like_count || 0) - (a.like_count || 0))
-          : comments
-        ).map((c) => {
+        {comments.map((c) => {
           const Row = (cm, isReply, replyTarget) => (
             <div
               className={`comment-row ${isReply ? "is-reply" : ""}`}

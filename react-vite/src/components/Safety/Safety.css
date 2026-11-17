@@ -129,4 +129,3 @@
 .auth-check { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: var(--text-dim); margin: 12px 0 4px; line-height: 1.4; }
 .auth-check input { margin-top: 2px; accent-color: var(--neon); }
 .auth-check a { color: var(--neon); }
-@media (max-width: 768px) { .legal-back { display: none; } }

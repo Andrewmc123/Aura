@@ -1,89 +1,71 @@
-/* Floating glass navigation pill */
-.fnav {
+.bottomnav {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  bottom: 0;
+  /* grow by the iOS home-indicator inset so nav items sit above it */
+  height: calc(var(--bottomnav-h) + env(safe-area-inset-bottom, 0px));
+  background: rgba(10, 10, 12, 0.92);
+  backdrop-filter: blur(14px);
+  border-top: 1px solid var(--line);
   display: none;
-  justify-content: center;
+  align-items: center;
+  justify-content: space-around;
   z-index: 80;
-  pointer-events: none;
+  padding: 0 6px env(safe-area-inset-bottom, 0px);
 }
+
 @media (max-width: 768px) {
-  .fnav { display: flex; }
+  .bottomnav { display: flex; }
 }
 
-.fnav-pill {
-  pointer-events: auto;
+.bn-item {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 8px 10px;
-  border-radius: 999px;
-  background: rgba(52, 36, 70, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(22px) saturate(140%);
-  -webkit-backdrop-filter: blur(22px) saturate(140%);
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-}
-
-.fnav-item {
-  width: 50px;
-  height: 46px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: none;
-  border-radius: 999px;
-  color: rgba(255, 255, 255, 0.62);
-  font-size: 22px;
-  cursor: pointer;
-  transition: color 0.15s ease, background 0.15s ease;
-}
-.fnav-item:hover { color: #fff; }
-.fnav-item.active { color: #fff; }
-.fnav-item.active svg { filter: drop-shadow(0 0 8px rgba(199, 125, 255, 0.8)); }
-
-.fnav-create {
-  width: 56px;
-  height: 56px;
-  margin: 0 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  color: #fff;
-  font-size: 26px;
-  background: radial-gradient(circle at 35% 30%, #c77dff 0%, #a855f7 55%, #8b2fe0 100%);
-  box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.18), 0 8px 26px rgba(168, 85, 247, 0.6);
-  transition: transform 0.15s ease;
-}
-.fnav-create:active { transform: scale(0.94); }
-
-.fnav-badge-wrap { position: relative; display: inline-flex; }
-.fnav-badge-wrap em {
-  position: absolute;
-  top: -6px;
-  right: -9px;
-  min-width: 17px;
-  height: 17px;
-  padding: 0 4px;
-  border-radius: 999px;
-  background: #e11d48;
-  color: #fff;
+  gap: 2px;
+  color: var(--text-dim);
   font-size: 10px;
-  font-style: normal;
-  font-weight: 800;
-  line-height: 17px;
-  text-align: center;
+  font-weight: 700;
+  background: none;
+  border: none;
+  padding: 4px 5px;
+  min-width: 0;
+}
+.bn-item svg { font-size: 20px; }
+.bn-item span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+/* the badge wrapper is a <span> too — don't clip it, or the inbox icon/badge
+   gets cut off once a count appears (logged-in state) */
+.bn-item .bn-badge-wrap { overflow: visible; }
+.bn-item.active { color: var(--text); }
+.bn-item.active svg { color: var(--neon); filter: drop-shadow(0 0 7px rgba(168, 85, 247, 0.55)); }
+
+.bn-create { padding: 0 6px; }
+.bn-create-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 32px;
+  border-radius: 9px;
+  background: var(--grad);
+  color: #0a0a0c;
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 0 16px rgba(168, 85, 247, 0.35), 0 0 16px rgba(255, 194, 51, 0.25);
 }
 
-:root[data-theme="light"] .fnav-pill {
-  background: rgba(255, 255, 255, 0.82);
-  border-color: rgba(28, 16, 48, 0.08);
-  box-shadow: 0 12px 34px rgba(60, 20, 110, 0.18);
+.bn-badge-wrap { position: relative; display: inline-flex; }
+.bn-badge-wrap em {
+  position: absolute;
+  top: -5px;
+  right: -8px;
+  background: var(--heart);
+  color: #fff;
+  font-style: normal;
+  font-size: 9px;
+  font-weight: 800;
+  border-radius: 999px;
+  padding: 1px 4px;
 }
-:root[data-theme="light"] .fnav-item { color: #6a5d7e; }
-:root[data-theme="light"] .fnav-item:hover,
-:root[data-theme="light"] .fnav-item.active { color: #1c1030; }
