@@ -255,3 +255,43 @@
     to { transform: translateY(0); opacity: 1; }
   }
 }
+
+/* ================= Aura V2 comments sheet ================= */
+.cdrawer-head { position: relative; gap: 10px; padding-top: 22px; }
+.cdrawer-head h3 { flex: 1; font-size: 22px; font-weight: 700; }
+.cdrawer-grab {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  width: 42px;
+  height: 5px;
+  margin-left: -21px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.25);
+}
+.cdrawer-sort select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 6px 26px 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.06) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23c9bfd8' fill='none' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 10px center;
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.cdrawer-sort select option { background: var(--bg-elev); color: var(--text); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.cdrawer { background: linear-gradient(180deg, #1d1230 0%, #120b1d 100%); }
+:root[data-theme="light"] .cdrawer { background: #fff; }
+:root[data-theme="light"] .cdrawer-grab { background: var(--line); }
+@media (max-width: 999px) {
+  .cdrawer { height: 74dvh; border-radius: 30px 30px 0 0; border-top: 1px solid rgba(255, 255, 255, 0.08); }
+}
+@media (min-width: 1000px) { .cdrawer-grab { display: none; } }
+/* keep the send button on screen on narrow phones */
+.composer-bar { gap: 6px; min-width: 0; }
+.composer-input { min-width: 0; }
+@media (max-width: 400px) {
+  .composer-gif-btn { width: 38px; height: 38px; padding: 0; }
+}

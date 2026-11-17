@@ -33,10 +33,21 @@ function StoryRow() {
 
   useEffect(() => { load(); }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const people = [...(rail.me?.has_story ? [rail.me] : []), ...rail.users];
+
   const open = async (u) => {
     const stories = await dispatch(thunkFetchUserStories(u.id));
     if (stories && stories.length) {
-      setModalContent(<StoryViewer stories={stories} canDelete={u.id === user?.id} onChanged={load} />);
+      setModalContent(
+        <StoryViewer
+          key={u.id}
+          stories={stories}
+          canDelete={u.id === user?.id}
+          onChanged={load}
+          people={people}
+          onPickPerson={open}
+        />
+      );
     }
   };
 

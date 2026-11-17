@@ -106,7 +106,7 @@ function GridTile({ post }) {
         near ? (
           <video
             ref={videoRef}
-            src={post.video_url}
+            src={`${post.video_url}#t=0.1`}
             poster={post.image_url || undefined}
             preload="metadata"
             muted

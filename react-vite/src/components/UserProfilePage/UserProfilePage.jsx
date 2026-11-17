@@ -159,6 +159,7 @@ export default function UserProfilePage() {
         )}
 
         <div className="profile-stats">
+          <span className="profile-stat"><strong>{compact(profile.video_count || 0)}</strong><span>Posts</span></span>
           {isOwn ? (
             <>
               <button className="profile-stat" onClick={() => setModalContent(<FollowListModal userId={userId} mode="following" />)}>
@@ -242,19 +243,19 @@ export default function UserProfilePage() {
 
       <nav className="profile-tabs">
         <button className={tab === "videos" ? "active" : ""} onClick={() => setTab("videos")}>
-          <FaClapperboard /> Videos <em>{profile.video_count}</em>
+          <FaClapperboard /> <span className="ptab-label">Videos</span>
         </button>
         <button className={tab === "liked" ? "active" : ""} onClick={() => setTab("liked")}>
-          <FaHeart /> Liked
+          <FaHeart /> <span className="ptab-label">Liked</span>
         </button>
         {isOwn && (
           <button className={tab === "favorites" ? "active" : ""} onClick={() => setTab("favorites")}>
-            <FaBookmark /> Favorites
+            <FaBookmark /> <span className="ptab-label">Favorites</span>
           </button>
         )}
         {isOwn && (
           <button className={tab === "vault" ? "active" : ""} onClick={() => setTab("vault")}>
-            <FaImages /> Vault
+            <FaImages /> <span className="ptab-label">Vault</span>
           </button>
         )}
       </nav>
