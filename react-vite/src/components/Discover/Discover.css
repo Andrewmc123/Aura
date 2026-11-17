@@ -249,3 +249,9 @@
 :root[data-theme="light"] .story-add { background: #fff; border-color: var(--line); color: var(--text); }
 :root[data-theme="light"] .dchip { background: #fff; border-color: var(--line); color: var(--text-dim); }
 :root[data-theme="light"] .dchip.on { color: #fff; }
+
+/* the Aura orb like button, sized for the cards */
+.pcard-rail .pcard-aura .rail-icon.aura-orb-icon { width: 42px; height: 42px; }
+.pcard-rail .pcard-aura .rail-count { color: #fff; font-size: 13px; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7); }
+.pcard-rail .pcard-aura { gap: 3px; filter: none; text-shadow: none; }
+.pcard-rail .pcard-aura .rail-tag { color: #e4ccff; }

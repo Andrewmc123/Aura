@@ -4,8 +4,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
-import { FaHeart, FaRegHeart, FaShareNodes, FaRegCommentDots, FaPlay, FaPlus } from "react-icons/fa6";
-import { fetchFeedPage, selectFeedPosts, selectFeed, thunkToggleLike } from "../../redux/posts";
+import { FaShareNodes, FaRegCommentDots, FaPlay, FaPlus } from "react-icons/fa6";
+import { fetchFeedPage, selectFeedPosts, selectFeed } from "../../redux/posts";
+import AuraLikeButton from "../Feed/AuraLikeButton";
 import { thunkFetchUserStories } from "../../redux/stories";
 import { useModal } from "../../context/Modal";
 import LoginFormModal from "../LoginFormModal";
@@ -79,10 +80,7 @@ function StoryRow() {
 }
 
 function PostCard({ post, onComments }) {
-  const dispatch = useDispatch();
   const navigate = useNavigate();
-  const user = useSelector((s) => s.session.user);
-  const { setModalContent } = useModal();
   const [shareOpen, setShareOpen] = useState(false);
   const videoRef = useRef(null);
   const cardRef = useRef(null);
@@ -103,12 +101,6 @@ function PostCard({ post, onComments }) {
     return () => io.disconnect();
   }, [isVideo]);
 
-  const gate = (fn) => (e) => {
-    e.stopPropagation();
-    if (!user) return setModalContent(<LoginFormModal />);
-    fn();
-  };
-
   return (
     <article className="pcard" ref={cardRef} onClick={() => navigate(`/video/${post.id}`)}>
       <div className="pcard-media">
@@ -125,10 +117,7 @@ function PostCard({ post, onComments }) {
       <div className="pcard-shade" />
 
       <div className="pcard-rail" onClick={(e) => e.stopPropagation()}>
-        <button type="button" className={post.liked ? "liked" : ""} onClick={gate(() => dispatch(thunkToggleLike(post)))} aria-label={post.liked ? "Remove like" : "Like"}>
-          {post.liked ? <FaHeart /> : <FaRegHeart />}
-          <span>{compact(post.like_count)}</span>
-        </button>
+        <AuraLikeButton post={post} size={30} className="pcard-aura" />
         <span className="pcard-share-wrap">
           <button type="button" onClick={(e) => { e.stopPropagation(); setShareOpen((v) => !v); }} aria-label="Share">
             <FaShareNodes />
